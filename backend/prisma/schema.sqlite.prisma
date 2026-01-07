@@ -1,0 +1,32 @@
+// Prisma schema for SQLite (easier setup for development)
+// To use this, rename it to schema.prisma or copy the datasource section
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Reservation {
+  id            Int      @id @default(autoincrement())
+  restaurantName String
+  platform      String
+  dateTime      DateTime
+  partySize     Int
+  userEmail     String
+  userName      String?
+  userPhone     String?
+  status        String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  bookingLink   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userEmail])
+  @@index([dateTime])
+  @@index([status])
+}
+
+

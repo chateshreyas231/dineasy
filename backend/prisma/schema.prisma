@@ -1,0 +1,32 @@
+// Prisma schema for reservation agent database
+// Run `npx prisma migrate dev` to create the database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // For PostgreSQL, change provider to "postgresql" and use: DATABASE_URL="postgresql://user:password@localhost:5432/reservation_agent?schema=public"
+  url      = env("DATABASE_URL")
+}
+
+model Reservation {
+  id            Int      @id @default(autoincrement())
+  restaurantName String
+  platform      String
+  dateTime      DateTime
+  partySize     Int
+  userEmail     String
+  userName      String?
+  userPhone     String?
+  status        String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  bookingLink   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userEmail])
+  @@index([dateTime])
+  @@index([status])
+}
+

@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 10 10 15;
+    --foreground: 255 255 255;
+    --card: 30 30 46;
+    --card-foreground: 255 255 255;
+    --popover: 30 30 46;
+    --popover-foreground: 255 255 255;
+    --primary: 147 51 234;
+    --primary-foreground: 255 255 255;
+    --secondary: 26 26 46;
+    --secondary-foreground: 255 255 255;
+    --muted: 45 45 62;
+    --muted-foreground: 156 163 175;
+    --accent: 236 72 153;
+    --accent-foreground: 255 255 255;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 45 45 62;
+    --input: 45 45 62;
+    --ring: 147 51 234;
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #0A0A0F 0%, #1A1A2E 50%, #16213E 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer utilities {
+  .bg-grid-white\/10 {
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  .gradient-primary {
+    background: linear-gradient(135deg, #9333EA 0%, #EC4899 100%);
+  }
+  
+  .gradient-secondary {
+    background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+  }
+  
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.5), 0 0 40px rgba(147, 51, 234, 0.3);
+  }
+  
+  .glow-pink {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.5), 0 0 40px rgba(236, 72, 153, 0.3);
+  }
+  
+  .text-gradient {
+    background: linear-gradient(135deg, #9333EA 0%, #EC4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
