@@ -21,7 +21,7 @@ const BrowseStack = createNativeStackNavigator();
 const BrowseStackNavigator = () => (
   <BrowseStack.Navigator 
     screenOptions={{ headerShown: false }}
-    initialRouteName="AIAssistant"
+    initialRouteName="BrowseHome"
   >
     <BrowseStack.Screen name="BrowseHome" component={DinerHomeScreen} />
     <BrowseStack.Screen name="AIAssistant" component={AIAssistantScreen} />

@@ -153,8 +153,8 @@ export const AIAssistantScreen: React.FC = () => {
 
   const handleNavigateToTabs = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Navigate to BrowseHome (the actual home screen within Browse stack)
-    (navigation as any).navigate('Browse', { screen: 'BrowseHome' });
+    // Navigate to DinerApp (tab navigator) and then to BrowseHome
+    (navigation as any).navigate('DinerApp', { screen: 'Browse', params: { screen: 'BrowseHome' } });
   };
 
   return (

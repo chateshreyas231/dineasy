@@ -5,6 +5,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SignupScreen } from '../screens/SignupScreen';
+import { AIAssistantScreen } from '../screens/AIAssistantScreen';
 import { DinerTabs } from './DinerTabs';
 import { RestaurantTabs } from './RestaurantTabs';
 import { useAppStore } from '../store/useAppStore';
@@ -55,7 +56,10 @@ export const RoleSwitcher: React.FC = () => {
         ) : !role ? (
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
         ) : role === 'diner' ? (
-          <Stack.Screen name="DinerApp" component={DinerTabs} />
+          <>
+            <Stack.Screen name="AIAssistant" component={AIAssistantScreen} />
+            <Stack.Screen name="DinerApp" component={DinerTabs} />
+          </>
         ) : (
           <Stack.Screen name="RestaurantApp" component={RestaurantTabs} />
         )}

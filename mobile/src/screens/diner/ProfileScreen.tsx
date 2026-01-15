@@ -65,7 +65,7 @@ export const ProfileScreen: React.FC = () => {
               <Button
                 title={`Switch to ${role === 'diner' ? 'Restaurant' : 'Diner'} View`}
                 onPress={handleSwitchRole}
-                variant="primary"
+                variant="secondary"
                 size="md"
                 style={styles.switchButton}
               />

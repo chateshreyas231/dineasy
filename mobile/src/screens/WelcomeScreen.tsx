@@ -57,14 +57,14 @@ export const WelcomeScreen: React.FC = () => {
                 title="I'm a Diner"
                 onPress={() => handleRoleSelect('diner')}
                 variant="secondary"
-                size="lg"
+                size="md"
                 style={styles.buttonStyle}
               />
               <Button
                 title="I'm a Restaurant"
                 onPress={() => handleRoleSelect('restaurant')}
                 variant="secondary"
-                size="lg"
+                size="md"
                 style={styles.buttonStyle}
               />
             </View>
@@ -119,13 +119,13 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: '100%',
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingHorizontal: 0, // Ensure no extra padding
     alignItems: 'stretch', // Ensure buttons fill container width
   },
   buttonStyle: {
     width: '100%',
     maxWidth: '100%', // Prevent expansion beyond container
-    maxHeight: 60, // Limit button height
+    maxHeight: 70, // Limit button height
   },
 });
