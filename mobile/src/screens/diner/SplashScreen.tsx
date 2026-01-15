@@ -1,80 +1,61 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { colors } from '../../theme/colors';
+import { colors, typography, spacing } from '../../theme';
 
-export function SplashScreen() {
+export const SplashScreen: React.FC = () => {
   const navigation = useNavigation();
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+
     const timer = setTimeout(() => {
       navigation.navigate('Permissions' as never);
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [navigation]);
+  }, []);
 
   return (
-    <LinearGradient colors={colors.gradients.background} style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <View style={styles.logoContainer}>
-            <View style={styles.glowCircle} />
-            <Text style={styles.logo}>🍽️</Text>
-          </View>
-          <Text style={styles.title}>Dineasy</Text>
-          <Text style={styles.subtitle}>Finding your next table…</Text>
-          <ActivityIndicator size="large" color={colors.primary.light} style={styles.loader} />
-        </View>
-      </SafeAreaView>
+    <LinearGradient
+      colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+      style={styles.container}
+    >
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+        <Text style={styles.logo}>Dineasy</Text>
+        <Text style={styles.tagline}>Extraordinary Dining Experiences</Text>
+      </Animated.View>
     </LinearGradient>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoContainer: {
-    position: 'relative',
-    marginBottom: 24,
-  },
-  glowCircle: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.primary.main,
-    opacity: 0.3,
-    top: -10,
-    left: -10,
+  content: {
+    alignItems: 'center',
   },
   logo: {
-    fontSize: 80,
-    marginBottom: 16,
+    ...typography.display,
+    color: colors.primary.main,
+    marginBottom: spacing.md,
   },
-  title: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.text.secondary,
-    marginTop: 8,
-  },
-  loader: {
-    marginTop: 32,
+  tagline: {
+    ...typography.h3,
+    color: colors.text.muted,
   },
 });

@@ -1,147 +1,98 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useAppStore } from '../../store/useAppStore';
-import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
 import { Card } from '../../components/Card';
-import { SectionHeader } from '../../components/SectionHeader';
+import { Input } from '../../components/Input';
+import { Button } from '../../components/Button';
+import { colors, typography, spacing } from '../../theme';
 
-export function ClaimVerifyScreen() {
+export const ClaimVerifyScreen: React.FC = () => {
   const navigation = useNavigation();
-  const setRestaurantProfile = useAppStore((state) => state.setRestaurantProfile);
-  const [restaurantName, setRestaurantName] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'info' | 'otp'>('info');
+  const [restaurantName, setRestaurantName] = React.useState('');
+  const [email, setEmail] = React.useState('');
 
-  const handleSubmitInfo = () => {
-    // In real app, send OTP here
-    setStep('otp');
-  };
-
-  const handleVerifyOTP = () => {
-    // In real app, verify OTP here
-    setRestaurantProfile({
-      name: restaurantName,
-      address,
-      phone,
-      verified: true,
-      vibeTags: [],
-      hours: '',
-      cuisine: [],
-      avgPrice: 2,
-      maxHolds: 5,
-      timeWindows: [],
-    });
+  const handleContinue = () => {
     navigation.navigate('RestaurantProfileSetup' as never);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <SectionHeader title="Claim / Verify Restaurant" />
+    <LinearGradient
+      colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Claim Your Restaurant</Text>
+          <Text style={styles.subtitle}>
+            Verify your business to get started
+          </Text>
 
-        {step === 'info' ? (
-          <>
-            <Card style={styles.card}>
-              <Input
-                label="Restaurant Name"
-                value={restaurantName}
-                onChangeText={setRestaurantName}
-                placeholder="Enter restaurant name"
-              />
-              <Input
-                label="Address"
-                value={address}
-                onChangeText={setAddress}
-                placeholder="Enter full address"
-                multiline
-              />
-              <Input
-                label="Phone Number"
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="(555) 123-4567"
-                keyboardType="phone-pad"
-              />
-            </Card>
-
-            <Button
-              title="Send Verification Code"
-              onPress={handleSubmitInfo}
-              variant="primary"
-              fullWidth
+          <Card style={styles.card}>
+            <Input
+              label="Restaurant Name"
+              placeholder="Enter restaurant name"
+              value={restaurantName}
+              onChangeText={setRestaurantName}
             />
-          </>
-        ) : (
-          <>
-            <Card style={styles.card}>
-              <Text style={styles.otpTitle}>Enter Verification Code</Text>
-              <Text style={styles.otpSubtitle}>
-                We sent a code to {phone}
-              </Text>
-              <Input
-                label="Verification Code"
-                value={otp}
-                onChangeText={setOtp}
-                placeholder="Enter 6-digit code"
-                keyboardType="number-pad"
-                maxLength={6}
-              />
-            </Card>
-
-            <Button
-              title="Verify & Continue"
-              onPress={handleVerifyOTP}
-              variant="primary"
-              fullWidth
+            <Input
+              label="Business Email"
+              placeholder="your@restaurant.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
             />
+          </Card>
 
-            <Button
-              title="Back"
-              onPress={() => setStep('info')}
-              variant="outline"
-              fullWidth
-              style={styles.backButton}
-            />
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+          <Button
+            title="Continue"
+            onPress={handleContinue}
+            variant="primary"
+            size="lg"
+            style={styles.button}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
+  scrollContent: {
+    padding: spacing.lg,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.text.muted,
+    marginBottom: spacing.xl,
   },
   card: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
-  otpTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
-  otpSubtitle: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    marginBottom: 24,
-  },
-  backButton: {
-    marginTop: 12,
+  button: {
+    marginTop: spacing.md,
   },
 });
-

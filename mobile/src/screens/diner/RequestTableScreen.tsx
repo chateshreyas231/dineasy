@@ -1,137 +1,150 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useAppStore } from '../../store/useAppStore';
-import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { SectionHeader } from '../../components/SectionHeader';
+import { Button } from '../../components/Button';
+import { Input } from '../../components/Input';
+import { colors, typography, spacing } from '../../theme';
+import { Restaurant, TableRequest } from '../../types';
+import { useAppStore } from '../../store/useAppStore';
+import * as Haptics from 'expo-haptics';
 
-export function RequestTableScreen() {
+export const RequestTableScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { restaurantId } = route.params as { restaurantId: string };
-  const addRequest = useAppStore((state) => state.addRequest);
-  const currentIntent = useAppStore((state) => state.currentIntent);
-  const [timeWindow, setTimeWindow] = useState('7:00 PM - 8:00 PM');
-  const [notes, setNotes] = useState('');
+  const { addRequest, user } = useAppStore();
+  const restaurant = (route.params as any)?.restaurant as Restaurant;
 
-  const handleSendRequest = () => {
-    const request = {
-      id: `req-${Date.now()}`,
-      restaurantId,
-      restaurantName: 'Restaurant', // Would get from restaurant data
-      partySize: currentIntent?.partySize || 2,
-      timeWindow,
-      notes: notes || undefined,
-      status: 'sent' as const,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    addRequest(request);
-    (navigation as any).navigate('RequestStatus', { requestId: request.id });
+  const [partySize, setPartySize] = useState(2);
+  const [dateTime, setDateTime] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!dateTime || !restaurant) {
+      return;
+    }
+
+    setLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      // Create table request
+      const request: TableRequest = {
+        id: Date.now().toString(),
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        dateTime: new Date(dateTime),
+        partySize,
+        status: 'pending',
+        notes: notes || undefined,
+      };
+
+      addRequest(request);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      
+      // Navigate to status screen
+      navigation.navigate('RequestStatus' as never, { request } as never);
+    } catch (error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      console.error('Error submitting request:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  if (!restaurant) {
+    return null;
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <SectionHeader title="Request Table" subtitle="Hold a table for your party" />
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Request Table</Text>
+          <Text style={styles.restaurantName}>{restaurant.name}</Text>
 
-        <Card style={styles.card}>
-          <Text style={styles.label}>Time Window</Text>
-          <View style={styles.timeWindowContainer}>
-            <Text style={styles.timeWindowText}>{timeWindow}</Text>
-            <Text style={styles.timeWindowHint}>Tap to adjust</Text>
-          </View>
-        </Card>
+          <Card style={styles.card}>
+            <Input
+              label="Date & Time"
+              placeholder="e.g., Tomorrow 7:00 PM"
+              value={dateTime}
+              onChangeText={setDateTime}
+            />
+            <Input
+              label="Party Size"
+              placeholder="Number of guests"
+              value={partySize.toString()}
+              onChangeText={(text) => setPartySize(parseInt(text) || 2)}
+              keyboardType="numeric"
+            />
+            <Input
+              label="Special Requests (Optional)"
+              placeholder="Any dietary restrictions or preferences..."
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={4}
+            />
+          </Card>
 
-        <Card style={styles.card}>
-          <Text style={styles.label}>Special Notes (optional)</Text>
-          <TextInput
-            style={styles.notesInput}
-            placeholder="e.g., quiet corner, candlelight, window seat..."
-            value={notes}
-            onChangeText={setNotes}
-            placeholderTextColor="#7F8C8D"
-            multiline
-            numberOfLines={4}
+          <Button
+            title="Submit Request"
+            onPress={handleSubmit}
+            variant="primary"
+            size="lg"
+            loading={loading}
+            disabled={!dateTime || loading}
+            style={styles.button}
           />
-        </Card>
-
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            Your request will be sent to the restaurant. They'll respond with a confirmation or alternative times.
-          </Text>
-        </View>
-
-        <Button
-          title="Send Request"
-          onPress={handleSendRequest}
-          variant="primary"
-          fullWidth
-        />
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: '#F8F9FA',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
+  scrollContent: {
+    padding: spacing.lg,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  restaurantName: {
+    ...typography.h3,
+    color: colors.text.muted,
+    marginBottom: spacing.xl,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 12,
-  },
-  timeWindowContainer: {
-    padding: 16,
-    backgroundColor: '#F7F7F7',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  timeWindowText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#FF6B6B',
-    marginBottom: 4,
-  },
-  timeWindowHint: {
-    fontSize: 12,
-    color: '#7F8C8D',
-  },
-  notesInput: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#2C3E50',
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  infoBox: {
-    backgroundColor: '#E8F4F8',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 24,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#2C3E50',
-    lineHeight: 20,
+  button: {
+    marginTop: spacing.md,
   },
 });
-

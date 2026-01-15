@@ -1,198 +1,197 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppStore } from '../../store/useAppStore';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { EmptyState } from '../../components/EmptyState';
+import { colors, typography, spacing } from '../../theme';
+import { useAppStore } from '../../store/useAppStore';
+import { bookingApi } from '../../utils/api';
+import * as WebBrowser from 'expo-web-browser';
+import * as Haptics from 'expo-haptics';
 
-export function TonightPlanScreen() {
-  const currentPlan = useAppStore((state) => state.currentPlan);
-  const backupPlans = useAppStore((state) => state.backupPlans);
-  const setCurrentPlan = useAppStore((state) => state.setCurrentPlan);
-  const setBackupPlans = useAppStore((state) => state.setBackupPlans);
+export const TonightPlanScreen: React.FC = () => {
+  const { currentPlan, setCurrentPlan } = useAppStore();
+  const [loading, setLoading] = useState(false);
 
-  const handleSwitchToBackup = (backup: typeof backupPlans[0]) => {
-    if (currentPlan) {
-      setBackupPlans([currentPlan, ...backupPlans.filter((p) => p.restaurantId !== backup.restaurantId)]);
+  useEffect(() => {
+    // Load bookings on mount
+    loadBookings();
+  }, []);
+
+  const loadBookings = async () => {
+    try {
+      const response = await bookingApi.list();
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        // Set the most recent/upcoming booking as current plan
+        const bookings = response.data as any[];
+        const upcoming = bookings
+          .filter((b: any) => new Date(b.dateTime) >= new Date())
+          .sort((a: any, b: any) => 
+            new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+          )[0];
+        if (upcoming) {
+          setCurrentPlan({
+            id: upcoming.id,
+            restaurantId: upcoming.restaurantId,
+            restaurantName: upcoming.restaurantName,
+            dateTime: new Date(upcoming.dateTime),
+            partySize: upcoming.partySize,
+            status: upcoming.status,
+            bookingLink: upcoming.bookingLink,
+            provider: upcoming.provider,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading bookings:', error);
     }
-    setCurrentPlan(backup);
-    setBackupPlans(backupPlans.filter((p) => p.restaurantId !== backup.restaurantId));
   };
 
-  if (!currentPlan && backupPlans.length === 0) {
+  const handleViewBooking = async () => {
+    if (currentPlan?.bookingLink) {
+      setLoading(true);
+      try {
+        await WebBrowser.openBrowserAsync(currentPlan.bookingLink);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (error) {
+        console.error('Error opening booking:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleCancel = async () => {
+    if (currentPlan?.id) {
+      setLoading(true);
+      try {
+        await bookingApi.cancel(currentPlan.id);
+        setCurrentPlan(null);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (error) {
+        console.error('Error cancelling booking:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  if (!currentPlan) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📅</Text>
-          <Text style={styles.emptyTitle}>No Plans Tonight</Text>
-          <Text style={styles.emptyText}>
-            Start searching for restaurants to create your plan
-          </Text>
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+          style={StyleSheet.absoluteFill}
+        />
+        <SafeAreaView style={styles.safeArea}>
+          <EmptyState
+            icon="calendar-outline"
+            title="No Plans Tonight"
+            message="Book a table to see your reservation here"
+          />
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Plan (Tonight)</Text>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Tonight's Plan</Text>
 
-        {currentPlan && (
-          <Card style={styles.currentPlanCard}>
-            <View style={styles.planHeader}>
-              <Text style={styles.planLabel}>Current Plan</Text>
-              <View style={styles.activeBadge}>
-                <Text style={styles.activeBadgeText}>Active</Text>
-              </View>
+          <Card style={styles.card}>
+            <Text style={styles.restaurantName}>{currentPlan.restaurantName}</Text>
+            <View style={styles.details}>
+              <Text style={styles.detail}>
+                {new Date(currentPlan.dateTime).toLocaleString()}
+              </Text>
+              <Text style={styles.detail}>
+                Party of {currentPlan.partySize}
+              </Text>
             </View>
-            <Text style={styles.planRestaurantName}>{currentPlan.restaurantName}</Text>
-            <View style={styles.planDetails}>
-              <Ionicons name="time" size={16} color="#7F8C8D" />
-              <Text style={styles.planDetailText}>{currentPlan.time}</Text>
-              <Text style={styles.planDetailText}> • </Text>
-              <Ionicons name="people" size={16} color="#7F8C8D" />
-              <Text style={styles.planDetailText}>Party of {currentPlan.partySize}</Text>
+            <View style={styles.actions}>
+              {currentPlan.bookingLink && (
+                <Button
+                  title="View Booking"
+                  onPress={handleViewBooking}
+                  variant="primary"
+                  size="md"
+                  loading={loading}
+                  style={styles.button}
+                />
+              )}
+              <Button
+                title="Cancel"
+                onPress={handleCancel}
+                variant="secondary"
+                size="md"
+                loading={loading}
+                style={styles.button}
+              />
             </View>
           </Card>
-        )}
-
-        {backupPlans.length > 0 && (
-          <View style={styles.backupsSection}>
-            <Text style={styles.backupsTitle}>Backup Suggestions</Text>
-            {backupPlans.map((backup) => (
-              <Card key={backup.restaurantId} style={styles.backupCard}>
-                <View style={styles.backupInfo}>
-                  <Text style={styles.backupRestaurantName}>{backup.restaurantName}</Text>
-                  <View style={styles.planDetails}>
-                    <Ionicons name="time" size={16} color="#7F8C8D" />
-                    <Text style={styles.planDetailText}>{backup.time}</Text>
-                    <Text style={styles.planDetailText}> • </Text>
-                    <Ionicons name="people" size={16} color="#7F8C8D" />
-                    <Text style={styles.planDetailText}>Party of {backup.partySize}</Text>
-                  </View>
-                </View>
-                <Button
-                  title="Switch to Backup"
-                  onPress={() => handleSwitchToBackup(backup)}
-                  variant="outline"
-                  style={styles.switchButton}
-                />
-              </Card>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: '#F8F9FA',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
+  scrollContent: {
+    padding: spacing.lg,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 24,
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.lg,
   },
-  currentPlanCard: {
-    marginBottom: 32,
-    backgroundColor: '#E8F5E9',
+  card: {
+    marginBottom: spacing.lg,
   },
-  planHeader: {
+  restaurantName: {
+    ...typography.h2,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
+  },
+  details: {
+    marginBottom: spacing.md,
+  },
+  detail: {
+    ...typography.body,
+    color: colors.text.muted,
+    marginBottom: spacing.xs,
+  },
+  actions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    gap: spacing.md,
+    marginTop: spacing.sm,
   },
-  planLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2C3E50',
-    textTransform: 'uppercase',
-  },
-  activeBadge: {
-    backgroundColor: '#4ECDC4',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  activeBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  planRestaurantName: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
-  planDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  planDetailText: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    marginLeft: 4,
-  },
-  backupsSection: {
-    marginTop: 8,
-  },
-  backupsTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 16,
-  },
-  backupCard: {
-    marginBottom: 16,
-  },
-  backupInfo: {
-    marginBottom: 12,
-  },
-  backupRestaurantName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
-  switchButton: {
-    marginTop: 8,
-  },
-  emptyContainer: {
+  button: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#7F8C8D',
-    textAlign: 'center',
-    lineHeight: 24,
   },
 });
-

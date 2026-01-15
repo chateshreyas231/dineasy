@@ -1,34 +1,53 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, typography, spacing } from '../theme';
 
 interface SectionHeaderProps {
   title: string;
-  subtitle?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
+  action?: React.ReactNode;
 }
 
-export function SectionHeader({ title, subtitle }: SectionHeaderProps) {
+export const SectionHeader: React.FC<SectionHeaderProps> = ({
+  title,
+  icon,
+  action,
+}) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      <View style={styles.left}>
+        {icon && (
+          <Ionicons
+            name={icon}
+            size={20}
+            color={colors.primary.main}
+            style={styles.icon}
+          />
+        )}
+        <Text style={styles.title}>{title}</Text>
+      </View>
+      {action && <View>{action}</View>}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
-    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  left: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icon: {
+    marginRight: spacing.sm,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2C3E50',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    marginTop: 4,
+    ...typography.h3,
+    color: colors.text.primary,
   },
 });
-

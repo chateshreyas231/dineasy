@@ -4,10 +4,10 @@
     "slug": "dineasy",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "splash": {
       "resizeMode": "contain",
-      "backgroundColor": "#0A0A0F"
+      "backgroundColor": "#FAF8F5"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -18,10 +18,20 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0A0A0F"
+        "backgroundColor": "#F8F5FF"
       },
       "package": "com.dineasy.app"
     },
-    "web": {}
+    "plugins": [
+      "expo-asset",
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "07732afe-c1ef-4edf-afbf-b091bbafebee"
+      }
+    },
+    "owner": "shreyas20"
   }
 }

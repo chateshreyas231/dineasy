@@ -1,128 +1,111 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppStore } from '../../store/useAppStore';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/Card';
 import { ToggleRow } from '../../components/ToggleRow';
 import { Button } from '../../components/Button';
-import { SectionHeader } from '../../components/SectionHeader';
+import { colors, typography, spacing } from '../../theme';
+import { useAppStore } from '../../store/useAppStore';
+import { authService } from '../../services/authService';
+import * as Haptics from 'expo-haptics';
 
-export function RestaurantSettingsScreen() {
-  const restaurantProfile = useAppStore((state) => state.restaurantProfile);
-  const setRole = useAppStore((state) => state.setRole);
-  const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-  const [smsEnabled, setSmsEnabled] = React.useState(false);
-  const [emailEnabled, setEmailEnabled] = React.useState(true);
+export const RestaurantSettingsScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const { setUser, setRole } = useAppStore();
+  const [notifications, setNotifications] = React.useState(true);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await authService.logout();
+    setUser(null);
     setRole(null);
+    navigation.navigate('Welcome' as never);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <SectionHeader title="Settings" />
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Settings</Text>
 
-        {restaurantProfile && (
           <Card style={styles.card}>
-            <Text style={styles.sectionTitle}>Restaurant Info</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Name:</Text>
-              <Text style={styles.infoValue}>{restaurantProfile.name}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Address:</Text>
-              <Text style={styles.infoValue}>{restaurantProfile.address}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Phone:</Text>
-              <Text style={styles.infoValue}>{restaurantProfile.phone}</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Notifications</Text>
+            <ToggleRow
+              label="Push Notifications"
+              value={notifications}
+              onValueChange={setNotifications}
+            />
           </Card>
-        )}
 
-        <Card style={styles.card}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <ToggleRow
-            label="Push Notifications"
-            value={notificationsEnabled}
-            onValueChange={setNotificationsEnabled}
-            description="Get notified about new requests"
-          />
-          <ToggleRow
-            label="SMS Notifications"
-            value={smsEnabled}
-            onValueChange={setSmsEnabled}
-            description="Receive text messages for urgent requests"
-          />
-          <ToggleRow
-            label="Email Notifications"
-            value={emailEnabled}
-            onValueChange={setEmailEnabled}
-            description="Daily summary emails"
-          />
-        </Card>
+          <Card style={styles.card}>
+            <Text style={styles.sectionTitle}>Profile</Text>
+            <Button
+              title="Edit Profile"
+              onPress={() => {}}
+              variant="secondary"
+              size="md"
+              style={styles.button}
+            />
+          </Card>
 
-        <Card style={styles.card}>
-          <Text style={styles.sectionTitle}>Staff Accounts</Text>
-          <Text style={styles.comingSoon}>Coming soon</Text>
-          <Text style={styles.comingSoonText}>
-            Add staff members to help manage requests
-          </Text>
-        </Card>
-
-        <Button title="Logout" onPress={handleLogout} variant="outline" fullWidth />
-      </ScrollView>
-    </SafeAreaView>
+          <Button
+            title="Logout"
+            onPress={handleLogout}
+            variant="secondary"
+            size="lg"
+            style={styles.logoutButton}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: '#F8F9FA',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
+  scrollContent: {
+    padding: spacing.lg,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.lg,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 16,
+    ...typography.h3,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
-  infoRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
+  button: {
+    marginTop: spacing.sm,
   },
-  infoLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#7F8C8D',
-    width: 80,
-  },
-  infoValue: {
-    fontSize: 14,
-    color: '#2C3E50',
-    flex: 1,
-  },
-  comingSoon: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#7F8C8D',
-    marginBottom: 8,
-  },
-  comingSoonText: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    lineHeight: 20,
+  logoutButton: {
+    marginTop: spacing.xl,
   },
 });
-

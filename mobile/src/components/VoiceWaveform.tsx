@@ -1,77 +1,74 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Animated as RNAnimated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../theme/colors';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
+import { colors } from '../theme';
 
 interface VoiceWaveformProps {
-  listening: boolean;
+  isActive?: boolean;
   barCount?: number;
-  barWidth?: number;
-  maxHeight?: number;
-  minHeight?: number;
-  color?: string;
 }
 
-// Fallback version using standard React Native Animated API
-export function VoiceWaveform({
-  listening,
-  barCount = 10,
-  barWidth = 4,
-  maxHeight = 40,
-  minHeight = 5,
-  color = colors.primary.main,
-}: VoiceWaveformProps) {
-  const [barHeights] = useState(
-    Array.from({ length: barCount }).map(() => new RNAnimated.Value(minHeight))
-  );
+export const VoiceWaveform: React.FC<VoiceWaveformProps> = ({
+  isActive = false,
+  barCount = 5,
+}) => {
+  const animations = useRef(
+    Array.from({ length: barCount }, () => new Animated.Value(0.3))
+  ).current;
 
   useEffect(() => {
-    if (listening) {
-      barHeights.forEach((height, index) => {
-        RNAnimated.loop(
-          RNAnimated.sequence([
-            RNAnimated.timing(height, {
-              toValue: maxHeight * (0.5 + Math.random() * 0.5),
-              duration: 200 + index * 20,
-              useNativeDriver: false, // height doesn't support native driver
+    if (isActive) {
+      const anims = animations.map((anim, index) =>
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim, {
+              toValue: 1,
+              duration: 300 + index * 100,
+              useNativeDriver: true,
             }),
-            RNAnimated.timing(height, {
-              toValue: minHeight,
-              duration: 200 + index * 20,
-              useNativeDriver: false,
+            Animated.timing(anim, {
+              toValue: 0.3,
+              duration: 300 + index * 100,
+              useNativeDriver: true,
             }),
           ])
-        ).start();
-      });
+        )
+      );
+      Animated.parallel(anims).start();
     } else {
-      barHeights.forEach((height) => {
-        RNAnimated.timing(height, {
-          toValue: minHeight,
-          duration: 300,
-          useNativeDriver: false,
+      animations.forEach((anim) => {
+        anim.stopAnimation();
+        Animated.timing(anim, {
+          toValue: 0.3,
+          duration: 200,
+          useNativeDriver: true,
         }).start();
       });
     }
-  }, [listening, barHeights, maxHeight, minHeight]);
+  }, [isActive]);
 
   return (
     <View style={styles.container}>
-      {barHeights.map((height, index) => (
-        <RNAnimated.View
+      {animations.map((anim, index) => (
+        <Animated.View
           key={index}
           style={[
             styles.bar,
             {
-              width: barWidth,
-              height,
-              backgroundColor: color,
+              transform: [
+                {
+                  scaleY: anim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.25, 1], // 8/32 = 0.25, 32/32 = 1
+                  }),
+                },
+              ],
             },
           ]}
         />
       ))}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -79,8 +76,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    height: 32,
   },
   bar: {
+    width: 3,
+    height: 32,
+    backgroundColor: colors.primary.main,
     borderRadius: 2,
   },
 });

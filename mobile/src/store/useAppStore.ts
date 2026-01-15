@@ -1,124 +1,142 @@
 import { create } from 'zustand';
-import { Role, Preferences, Request, Watch, Intent, RestaurantStatus, RestaurantProfile } from '../types';
+import {
+  UserRole,
+  User,
+  Preferences,
+  QueryIntent,
+  Restaurant,
+  TableRequest,
+  Booking,
+  AIMessage,
+  RestaurantProfile,
+} from '../types';
 
 interface AppState {
   // Role
-  role: Role;
-  setRole: (role: Role) => void;
+  role: UserRole | null;
+  setRole: (role: UserRole) => void;
+
+  // User
+  user: User | null;
+  setUser: (user: User | null) => void;
 
   // Preferences
   preferences: Preferences | null;
   setPreferences: (preferences: Preferences) => void;
 
   // Intent
-  currentIntent: Intent | null;
-  setCurrentIntent: (intent: Intent | null) => void;
+  intent: QueryIntent | null;
+  setIntent: (intent: QueryIntent | null) => void;
 
   // Requests
-  requests: Request[];
-  addRequest: (request: Request) => void;
-  updateRequest: (id: string, updates: Partial<Request>) => void;
+  requests: TableRequest[];
+  addRequest: (request: TableRequest) => void;
+  updateRequest: (id: string, updates: Partial<TableRequest>) => void;
 
   // Watchlist
-  watches: Watch[];
-  addWatch: (watch: Watch) => void;
-  removeWatch: (id: string) => void;
-  toggleWatchNotifications: (id: string) => void;
+  watchlist: Restaurant[];
+  addToWatchlist: (restaurant: Restaurant) => void;
+  removeFromWatchlist: (id: string) => void;
 
-  // Restaurant
-  restaurantStatus: RestaurantStatus;
-  setRestaurantStatus: (status: RestaurantStatus) => void;
+  // Restaurant Profile
   restaurantProfile: RestaurantProfile | null;
-  setRestaurantProfile: (profile: RestaurantProfile) => void;
-  nextAvailableWindow: string | null;
-  setNextAvailableWindow: (window: string | null) => void;
+  setRestaurantProfile: (profile: RestaurantProfile | null) => void;
 
-  // Plan
-  currentPlan: {
-    restaurantId: string;
-    restaurantName: string;
-    time: string;
-    partySize: number;
-  } | null;
-  setCurrentPlan: (plan: AppState['currentPlan']) => void;
-  backupPlans: Array<{
-    restaurantId: string;
-    restaurantName: string;
-    time: string;
-    partySize: number;
-  }>;
-  setBackupPlans: (plans: AppState['backupPlans']) => void;
+  // Restaurant Status
+  restaurantStatus: 'open' | 'closed' | 'busy';
+  setRestaurantStatus: (status: 'open' | 'closed' | 'busy') => void;
+
+  // Current Plan
+  currentPlan: Booking | null;
+  setCurrentPlan: (plan: Booking | null) => void;
+
+  // Backup Plans
+  backupPlans: Booking[];
+  setBackupPlans: (plans: Booking[]) => void;
 
   // AI Chat
-  aiMessages: Array<{
-    id: string;
-    text: string;
-    isUser: boolean;
-    timestamp: Date;
-  }>;
-  addAIMessage: (message: { text: string; isUser: boolean }) => void;
+  aiMessages: AIMessage[];
   isListening: boolean;
-  setIsListening: (listening: boolean) => void;
   isThinking: boolean;
-  setIsThinking: (thinking: boolean) => void;
+  addAIMessage: (message: AIMessage) => void;
+  setListening: (listening: boolean) => void;
+  setThinking: (thinking: boolean) => void;
+  clearAIChat: () => void;
+  
+  // AI Activities (live feed)
+  aiActivities: any[];
+  addAIActivity: (activity: any) => void;
+  clearAIActivities: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
+  // Role
   role: null,
   setRole: (role) => set({ role }),
 
+  // User
+  user: null,
+  setUser: (user) => set({ user }),
+
+  // Preferences
   preferences: null,
   setPreferences: (preferences) => set({ preferences }),
 
-  currentIntent: null,
-  setCurrentIntent: (intent) => set({ currentIntent: intent }),
+  // Intent
+  intent: null,
+  setIntent: (intent) => set({ intent }),
 
+  // Requests
   requests: [],
-  addRequest: (request) => set((state) => ({ requests: [...state.requests, request] })),
+  addRequest: (request) =>
+    set((state) => ({ requests: [...state.requests, request] })),
   updateRequest: (id, updates) =>
     set((state) => ({
-      requests: state.requests.map((r) => (r.id === id ? { ...r, ...updates, updatedAt: new Date() } : r)),
-    })),
-
-  watches: [],
-  addWatch: (watch) => set((state) => ({ watches: [...state.watches, watch] })),
-  removeWatch: (id) => set((state) => ({ watches: state.watches.filter((w) => w.id !== id) })),
-  toggleWatchNotifications: (id) =>
-    set((state) => ({
-      watches: state.watches.map((w) =>
-        w.id === id ? { ...w, notificationsEnabled: !w.notificationsEnabled } : w
+      requests: state.requests.map((r) =>
+        r.id === id ? { ...r, ...updates } : r
       ),
     })),
 
-  restaurantStatus: 'open',
-  setRestaurantStatus: (status) => set({ restaurantStatus: status }),
+  // Watchlist
+  watchlist: [],
+  addToWatchlist: (restaurant) =>
+    set((state) => ({
+      watchlist: [...state.watchlist, restaurant],
+    })),
+  removeFromWatchlist: (id) =>
+    set((state) => ({
+      watchlist: state.watchlist.filter((r) => r.id !== id),
+    })),
+
+  // Restaurant Profile
   restaurantProfile: null,
   setRestaurantProfile: (profile) => set({ restaurantProfile: profile }),
-  nextAvailableWindow: null,
-  setNextAvailableWindow: (window) => set({ nextAvailableWindow: window }),
 
+  // Restaurant Status
+  restaurantStatus: 'open',
+  setRestaurantStatus: (status) => set({ restaurantStatus: status }),
+
+  // Current Plan
   currentPlan: null,
   setCurrentPlan: (plan) => set({ currentPlan: plan }),
+
+  // Backup Plans
   backupPlans: [],
   setBackupPlans: (plans) => set({ backupPlans: plans }),
 
   // AI Chat
   aiMessages: [],
-  addAIMessage: (message) =>
-    set((state) => ({
-      aiMessages: [
-        ...state.aiMessages,
-        {
-          id: Date.now().toString(),
-          text: message.text,
-          isUser: message.isUser,
-          timestamp: new Date(),
-        },
-      ],
-    })),
   isListening: false,
-  setIsListening: (listening) => set({ isListening: listening }),
   isThinking: false,
-  setIsThinking: (thinking) => set({ isThinking: thinking }),
+  addAIMessage: (message) =>
+    set((state) => ({ aiMessages: [...state.aiMessages, message] })),
+  setListening: (listening) => set({ isListening: listening }),
+  setThinking: (thinking) => set({ isThinking: thinking }),
+  clearAIChat: () => set({ aiMessages: [], isListening: false, isThinking: false }),
+  
+  // AI Activities
+  aiActivities: [],
+  addAIActivity: (activity) =>
+    set((state) => ({ aiActivities: [...state.aiActivities, activity] })),
+  clearAIActivities: () => set({ aiActivities: [] }),
 }));
-

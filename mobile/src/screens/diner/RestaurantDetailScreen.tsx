@@ -1,218 +1,249 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppStore } from '../../store/useAppStore';
-import { mockRestaurants } from '../../mock/restaurants';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { colors, typography, spacing, radius } from '../../theme';
+import { Restaurant } from '../../types';
+import { useAppStore } from '../../store/useAppStore';
+import { restaurantApi, bookingApi } from '../../utils/api';
+import * as Haptics from 'expo-haptics';
+import * as WebBrowser from 'expo-web-browser';
 
-export function RestaurantDetailScreen() {
+export const RestaurantDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { restaurantId } = route.params as { restaurantId: string };
-  const restaurant = mockRestaurants.find((r) => r.id === restaurantId);
-  const addRequest = useAppStore((state) => state.addRequest);
-  const addWatch = useAppStore((state) => state.addWatch);
-  const currentIntent = useAppStore((state) => state.currentIntent);
+  const { addToWatchlist, watchlist, user, setCurrentPlan } = useAppStore();
+  const restaurant = (route.params as any)?.restaurant as Restaurant;
+  const [loading, setLoading] = useState(false);
+
+  const isInWatchlist = restaurant ? watchlist.some((r) => r.id === restaurant.id) : false;
 
   if (!restaurant) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text>Restaurant not found</Text>
-      </SafeAreaView>
-    );
+    return null;
   }
 
-  const handleRequestTable = () => {
-    navigation.navigate('RequestTable' as never, { restaurantId: restaurant.id } as never);
+  const handleAddToWatchlist = () => {
+    if (!isInWatchlist) {
+      addToWatchlist(restaurant);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
   };
 
-  const handleWatch = () => {
-    const watch = {
-      id: `watch-${Date.now()}`,
-      geoLabel: restaurant.address,
-      radius: 1,
-      timeRange: 'next 2 hours',
-      vibeTags: restaurant.vibe,
-      notificationsEnabled: true,
-    };
-    addWatch(watch);
+  const handleBookNow = async () => {
+    if (!restaurant.bookingLink) {
+      // Request table through app
+      navigation.navigate('RequestTable' as never, { restaurant } as never);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Open booking link in browser
+      await WebBrowser.openBrowserAsync(restaurant.bookingLink);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Error opening booking link:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <View style={styles.photoPlaceholder}>
-          <Ionicons name="image" size={64} color="#E0E0E0" />
-          <Text style={styles.photoPlaceholderText}>Photo Gallery</Text>
-        </View>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {restaurant.imageUrl && (
+            <Image source={{ uri: restaurant.imageUrl }} style={styles.image} />
+          )}
 
-        <View style={styles.header}>
-          <Text style={styles.name}>{restaurant.name}</Text>
-          <View style={styles.metaRow}>
-            <Ionicons name="location" size={16} color="#7F8C8D" />
-            <Text style={styles.metaText}>{restaurant.distance} mi • {restaurant.address}</Text>
-          </View>
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>{'$'.repeat(restaurant.priceLevel)}</Text>
-            <Text style={styles.metaText}> • Est. wait: {restaurant.estWaitMinRange[0]}-{restaurant.estWaitMinRange[1]} min</Text>
-          </View>
-        </View>
-
-        <View style={styles.tagsContainer}>
-          {restaurant.vibe.map((tag) => (
-            <View key={tag} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
+          <Card style={styles.card}>
+            <Text style={styles.name}>{restaurant.name}</Text>
+            <View style={styles.meta}>
+              <View style={styles.rating}>
+                <Ionicons name="star" size={20} color={colors.accent.gold} />
+                <Text style={styles.ratingText}>{restaurant.rating}</Text>
+              </View>
+              <Text style={styles.cuisine}>{restaurant.cuisine}</Text>
+              <Text style={styles.location}>{restaurant.location}</Text>
             </View>
-          ))}
-          {restaurant.cuisine.map((tag) => (
-            <View key={tag} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
-            </View>
-          ))}
-        </View>
+          </Card>
 
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Best Times</Text>
-          {restaurant.bestTimes.map((time, index) => (
-            <Text key={index} style={styles.sectionText}>• {time}</Text>
-          ))}
-        </Card>
+          {restaurant.highlights && restaurant.highlights.length > 0 && (
+            <Card style={styles.card}>
+              <Text style={styles.sectionTitle}>Highlights</Text>
+              {restaurant.highlights.map((highlight, idx) => (
+                <View key={idx} style={styles.highlight}>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={colors.primary.main}
+                  />
+                  <Text style={styles.highlightText}>{highlight}</Text>
+                </View>
+              ))}
+            </Card>
+          )}
 
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Highlights</Text>
-          {restaurant.highlights.map((highlight, index) => (
-            <Text key={index} style={styles.sectionText}>• {highlight}</Text>
-          ))}
-        </Card>
+          {restaurant.bestTimes && restaurant.bestTimes.length > 0 && (
+            <Card style={styles.card}>
+              <Text style={styles.sectionTitle}>Best Times</Text>
+              <View style={styles.timesContainer}>
+                {restaurant.bestTimes.map((time, idx) => (
+                  <View key={idx} style={styles.timeChip}>
+                    <Text style={styles.timeText}>{time}</Text>
+                  </View>
+                ))}
+              </View>
+            </Card>
+          )}
 
-        <View style={styles.actions}>
-          <Button
-            title="Request a Table"
-            onPress={handleRequestTable}
-            variant="primary"
-            fullWidth
-          />
-          <TouchableOpacity style={styles.secondaryAction} onPress={handleWatch}>
-            <Ionicons name="eye" size={20} color="#FF6B6B" />
-            <Text style={styles.secondaryActionText}>Watch Availability</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryAction}>
-            <Ionicons name="navigate" size={20} color="#FF6B6B" />
-            <Text style={styles.secondaryActionText}>Directions</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          <View style={styles.actions}>
+            <TouchableOpacity
+              onPress={handleAddToWatchlist}
+              style={[styles.watchlistButton, isInWatchlist && styles.watchlistButtonActive]}
+            >
+              <Ionicons
+                name={isInWatchlist ? "heart" : "heart-outline"}
+                size={24}
+                color={isInWatchlist ? colors.status.error : colors.text.muted}
+              />
+            </TouchableOpacity>
+            <Button
+              title={restaurant.bookingLink ? "Book Now" : "Request Table"}
+              onPress={handleBookNow}
+              variant="primary"
+              size="lg"
+              loading={loading}
+              style={styles.button}
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: '#F8F9FA',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    paddingBottom: 40,
+  scrollContent: {
+    padding: spacing.lg,
   },
-  photoPlaceholder: {
-    height: 200,
-    backgroundColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
+  image: {
+    width: '100%',
+    height: 300,
+    borderRadius: 20,
+    marginBottom: spacing.lg,
   },
-  photoPlaceholderText: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    marginTop: 8,
-  },
-  header: {
-    padding: 24,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+  card: {
+    marginBottom: spacing.lg,
   },
   name: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 8,
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
-  metaRow: {
+  meta: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  metaText: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    marginLeft: 4,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  price: {
-    fontSize: 16,
-    color: '#2C3E50',
-    fontWeight: '600',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
+    gap: spacing.md,
     flexWrap: 'wrap',
-    padding: 24,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
-  tag: {
-    backgroundColor: '#F0F0F0',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
+  rating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
-  tagText: {
-    fontSize: 14,
-    color: '#2C3E50',
+  ratingText: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.text.primary,
   },
-  section: {
-    marginHorizontal: 24,
-    marginTop: 16,
+  cuisine: {
+    ...typography.body,
+    color: colors.text.muted,
+  },
+  location: {
+    ...typography.body,
+    color: colors.text.muted,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 12,
+    ...typography.h3,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
-  sectionText: {
-    fontSize: 16,
-    color: '#2C3E50',
-    lineHeight: 24,
-    marginBottom: 8,
-  },
-  actions: {
-    padding: 24,
-    gap: 12,
-  },
-  secondaryAction: {
+  highlight: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    gap: 8,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
-  secondaryActionText: {
-    fontSize: 16,
-    color: '#FF6B6B',
-    fontWeight: '500',
+  highlightText: {
+    ...typography.body,
+    color: colors.text.primary,
+  },
+  timesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  timeChip: {
+    backgroundColor: colors.background.secondary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+  },
+  timeText: {
+    ...typography.body,
+    color: colors.text.primary,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    alignItems: 'center',
+  },
+  watchlistButton: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.full,
+    backgroundColor: colors.background.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+  },
+  watchlistButtonActive: {
+    backgroundColor: colors.primary.glow,
+    borderColor: colors.primary.main,
+  },
+  button: {
+    flex: 1,
+    marginTop: 0,
   },
 });
-

@@ -1,61 +1,88 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../theme/colors';
+import * as Haptics from 'expo-haptics';
+import { colors, typography, radius, spacing } from '../theme';
+
+export type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost';
+export type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
-  fullWidth?: boolean;
-  style?: any;
+  style?: ViewStyle;
 }
 
-export function Button({
+export const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
   variant = 'primary',
+  size = 'md',
   disabled = false,
   loading = false,
-  fullWidth = false,
   style,
-}: ButtonProps) {
-  const buttonContent = (
-    <>
-      {loading ? (
-        <ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? colors.primary.main : '#FFFFFF'} />
-      ) : (
-        <Text style={[
-          styles.text,
-          variant === 'primary' && styles.primaryText,
-          variant === 'secondary' && styles.secondaryText,
-          variant === 'outline' && styles.outlineText,
-          variant === 'ghost' && styles.ghostText,
-          disabled && styles.disabledText,
-        ]}>
-          {title}
-        </Text>
-      )}
-    </>
-  );
+}) => {
+  const handlePress = () => {
+    if (!disabled && !loading) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onPress();
+    }
+  };
 
-  if (variant === 'primary') {
+  const buttonStyle = [
+    styles.button,
+    styles[`button_${size}`],
+    variant === 'secondary' && styles.buttonSecondary,
+    variant === 'ghost' && styles.buttonGhost,
+    disabled && styles.buttonDisabled,
+    style, // User style applied last to allow overrides
+  ];
+
+  const textStyle = [
+    styles.text,
+    styles[`text_${size}`],
+    variant === 'primary' && styles.textPrimary,
+    variant === 'accent' && styles.textPrimary,
+    variant === 'secondary' && styles.textSecondary,
+    variant === 'ghost' && styles.textGhost,
+    disabled && styles.textDisabled,
+  ];
+
+  if (variant === 'primary' || variant === 'accent') {
+    const gradientColors: [string, string] =
+      variant === 'primary'
+        ? ['#FF6B92', '#B66DFF'] // Pink to purple gradient
+        : ['#FF6B92', '#B66DFF']; // Same gradient for accent
+
     return (
       <TouchableOpacity
-        onPress={onPress}
+        onPress={handlePress}
         disabled={disabled || loading}
         activeOpacity={0.8}
-        style={[fullWidth && styles.fullWidth, disabled && styles.disabled, style]}
+        style={buttonStyle}
       >
         <LinearGradient
-          colors={colors.gradients.primary}
+          colors={gradientColors}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[styles.button, styles.gradient, fullWidth && styles.fullWidth]}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
         >
-          {buttonContent}
+          {loading ? (
+            <ActivityIndicator color={colors.text.inverse} size="small" />
+          ) : (
+            <Text style={textStyle}>{title}</Text>
+          )}
         </LinearGradient>
       </TouchableOpacity>
     );
@@ -63,74 +90,92 @@ export function Button({
 
   return (
     <TouchableOpacity
-      style={[
-        styles.button,
-        variant === 'secondary' && styles.secondary,
-        variant === 'outline' && styles.outline,
-        variant === 'ghost' && styles.ghost,
-        disabled && styles.disabled,
-        fullWidth && styles.fullWidth,
-        style,
-      ]}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
+      style={buttonStyle}
     >
-      {buttonContent}
+      {loading ? (
+        <ActivityIndicator
+          color={variant === 'ghost' ? colors.primary.main : colors.text.primary}
+          size="small"
+        />
+      ) : (
+        <Text style={textStyle}>{title}</Text>
+      )}
     </TouchableOpacity>
   );
-}
+};
+
+// Extract radius value to constant to avoid StyleSheet issues
+const buttonRadius = radius.xl;
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 16,
+    borderRadius: buttonRadius, // More rounded (24px)
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
     overflow: 'hidden',
+    alignSelf: 'stretch', // Ensure button fills container width
+    minWidth: 0, // Allow button to shrink if needed
+    flexShrink: 1, // Allow button to shrink
+    maxHeight: 200, // Prevent buttons from becoming too tall
+  },
+  button_sm: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    minHeight: 36,
+  },
+  button_md: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    minHeight: 48,
+  },
+  button_lg: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    minHeight: 56,
+  },
+  buttonSecondary: {
+    backgroundColor: colors.background.card,
+    borderWidth: 1.5,
+    borderColor: colors.border.elegant,
+  },
+  buttonGhost: {
+    backgroundColor: 'transparent',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   gradient: {
     width: '100%',
-  },
-  secondary: {
-    backgroundColor: colors.background.card,
-    borderWidth: 1,
-    borderColor: colors.border.light,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: colors.primary.main,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  fullWidth: {
-    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    ...typography.button,
+    textAlign: 'center',
   },
-  primaryText: {
-    color: '#FFFFFF',
+  text_sm: {
+    fontSize: 15,
   },
-  secondaryText: {
+  text_md: {
+    fontSize: 17,
+  },
+  text_lg: {
+    fontSize: 19,
+  },
+  textPrimary: {
+    color: colors.text.inverse,
+  },
+  textSecondary: {
     color: colors.text.primary,
   },
-  outlineText: {
+  textGhost: {
     color: colors.primary.main,
   },
-  ghostText: {
-    color: colors.text.secondary,
-  },
-  disabledText: {
-    color: colors.text.muted,
+  textDisabled: {
+    opacity: 0.6,
   },
 });

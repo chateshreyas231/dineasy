@@ -1,89 +1,88 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useAppStore } from '../../store/useAppStore';
 import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
+import { colors, typography, spacing } from '../../theme';
 
-export function RestaurantWelcomeScreen() {
+export const RestaurantWelcomeScreen: React.FC = () => {
   const navigation = useNavigation();
-  const restaurantProfile = useAppStore((state) => state.restaurantProfile);
-
-  if (restaurantProfile?.verified) {
-    // Already verified, navigate to main app
-    return null;
-  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.logo}>🍽️</Text>
-        <Text style={styles.title}>Manage Dineasy Requests</Text>
-        <Text style={styles.subtitle}>
-          Connect with diners and manage table requests in real-time
-        </Text>
-
-        <Card style={styles.card}>
-          <Text style={styles.cardTitle}>Get Started</Text>
-          <Text style={styles.cardText}>
-            Claim your restaurant to start receiving table requests from diners in your area.
+    <LinearGradient
+      colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Welcome to Dineasy</Text>
+          <Text style={styles.subtitle}>
+            Manage your restaurant reservations with ease
           </Text>
-        </Card>
 
-        <Button
-          title="Claim / Verify Restaurant"
-          onPress={() => navigation.navigate('ClaimVerify' as never)}
-          variant="primary"
-          fullWidth
-        />
-      </View>
-    </SafeAreaView>
+          <View style={styles.features}>
+            <Text style={styles.feature}>✓ Request Management</Text>
+            <Text style={styles.feature}>✓ Real-time Availability</Text>
+            <Text style={styles.feature}>✓ Analytics & Insights</Text>
+          </View>
+
+          <Button
+            title="Get Started"
+            onPress={() => navigation.navigate('ClaimVerify' as never)}
+            variant="primary"
+            size="lg"
+            style={styles.button}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
-  content: {
+  safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
   },
-  logo: {
-    fontSize: 80,
-    marginBottom: 16,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: spacing.lg,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 8,
+    ...typography.display,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#7F8C8D',
-    marginBottom: 32,
+    ...typography.bodyLarge,
+    color: colors.text.muted,
+    marginBottom: spacing.xl,
     textAlign: 'center',
-    lineHeight: 24,
   },
-  card: {
-    marginBottom: 32,
+  features: {
+    marginBottom: spacing.xl,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 8,
+  feature: {
+    ...typography.body,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
-  cardText: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    lineHeight: 20,
+  button: {
+    marginTop: spacing.lg,
   },
 });
-

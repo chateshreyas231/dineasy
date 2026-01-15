@@ -187,3 +187,4 @@ export class OpenTableAdapter implements PlatformAdapter {
 }
 
 
+

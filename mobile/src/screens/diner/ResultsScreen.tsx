@@ -1,295 +1,223 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppStore } from '../../store/useAppStore';
-import { mockRestaurants } from '../../mock/restaurants';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { colors, typography, spacing, radius } from '../../theme';
+import { mockRestaurants } from '../../mock/restaurants';
+import { Restaurant } from '../../types';
+import { restaurantApi } from '../../utils/api';
+import { useAppStore } from '../../store/useAppStore';
+import { useState, useEffect } from 'react';
 
-export function ResultsScreen() {
+export const ResultsScreen: React.FC = () => {
   const navigation = useNavigation();
-  const currentIntent = useAppStore((state) => state.currentIntent);
-  const addRequest = useAppStore((state) => state.addRequest);
-  const addWatch = useAppStore((state) => state.addWatch);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const route = useRoute();
+  const { addToWatchlist } = useAppStore();
+  const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
+  const [loading, setLoading] = useState(false);
 
-  const handlePingAvailability = (restaurantId: string, restaurantName: string) => {
-    const request = {
-      id: `req-${Date.now()}`,
-      restaurantId,
-      restaurantName,
-      partySize: currentIntent?.partySize || 2,
-      timeWindow: currentIntent?.timeWindow === 'now' ? 'Now' : currentIntent?.timeWindow || 'Later',
-      status: 'sent' as const,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    addRequest(request);
-    navigation.navigate('RequestStatus' as never, { requestId: request.id } as never);
-  };
+  const searchQuery = (route.params as any)?.query as string;
 
-  const handleWatch = (restaurantId: string) => {
-    const watch = {
-      id: `watch-${Date.now()}`,
-      geoLabel: 'Near me',
-      radius: 2,
-      timeRange: 'next 2 hours',
-      vibeTags: currentIntent?.vibeTags || [],
-      notificationsEnabled: true,
-    };
-    addWatch(watch);
-  };
-
-  const getMatchScore = (restaurant: typeof mockRestaurants[0]) => {
-    // Simple match scoring based on tags
-    let score = 70;
-    if (currentIntent?.vibeTags) {
-      const matchingVibes = restaurant.vibe.filter((v) => currentIntent.vibeTags.includes(v));
-      score += matchingVibes.length * 10;
+  useEffect(() => {
+    if (searchQuery) {
+      loadSearchResults(searchQuery);
     }
-    return Math.min(100, score);
+  }, [searchQuery]);
+
+  const loadSearchResults = async (query: string) => {
+    setLoading(true);
+    try {
+      const response = await restaurantApi.search(query);
+      if (response.data?.results) {
+        // Transform API results to Restaurant format
+        const transformed = response.data.results.map((r: any) => ({
+          id: r.restaurantId || r.name,
+          name: r.name,
+          cuisine: r.cuisine || 'Unknown',
+          rating: r.rating || 4.5,
+          priceLevel: r.priceRange?.length || 2,
+          location: r.location,
+          distance: r.distance,
+          imageUrl: r.imageUrl,
+          highlights: r.vibeTags || [],
+          bookingLink: r.bookingLink,
+          platform: r.platform,
+        }));
+        setRestaurants(transformed);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      // Fallback to mock data
+      setRestaurants(mockRestaurants);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (viewMode === 'map') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.mapHeader}>
-          <TouchableOpacity onPress={() => setViewMode('list')}>
-            <Ionicons name="list" size={24} color="#FF6B6B" />
-          </TouchableOpacity>
-          <Text style={styles.mapHeaderText}>Map View</Text>
-          <View style={{ width: 24 }} />
-        </View>
-        <View style={styles.mapPlaceholder}>
-          <Ionicons name="map" size={64} color="#E0E0E0" />
-          <Text style={styles.mapPlaceholderText}>Map view coming soon</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const handleRestaurantPress = (restaurant: Restaurant) => {
+    navigation.navigate('RestaurantDetail' as never, { restaurant } as never);
+  };
+
+  const handleAddToWatchlist = (restaurant: Restaurant) => {
+    addToWatchlist(restaurant);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{mockRestaurants.length} restaurants found</Text>
-        <TouchableOpacity onPress={() => setViewMode('map')}>
-          <Ionicons name="map" size={24} color="#FF6B6B" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {mockRestaurants.map((restaurant) => {
-          const matchScore = getMatchScore(restaurant);
-          const waitRange = `${restaurant.estWaitMinRange[0]}-${restaurant.estWaitMinRange[1]} min`;
-
-          return (
-            <Card key={restaurant.id} style={styles.restaurantCard}>
-              <View style={styles.cardHeader}>
-                <View style={styles.matchScore}>
-                  <Text style={styles.matchScoreText}>{matchScore}%</Text>
-                  <Text style={styles.matchScoreLabel}>Match</Text>
-                </View>
-                <View style={styles.restaurantInfo}>
-                  <Text style={styles.restaurantName}>{restaurant.name}</Text>
-                  <View style={styles.metaRow}>
-                    <Ionicons name="location" size={14} color="#7F8C8D" />
-                    <Text style={styles.metaText}>{restaurant.distance} mi</Text>
-                    <Text style={styles.metaText}> • </Text>
-                    <Text style={styles.metaText}>{'$'.repeat(restaurant.priceLevel)}</Text>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Search Results</Text>
+        </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {restaurants.map((restaurant) => (
+            <TouchableOpacity
+              key={restaurant.id}
+              onPress={() => handleRestaurantPress(restaurant)}
+            >
+              <Card style={styles.restaurantCard}>
+                {restaurant.imageUrl && (
+                  <Image
+                    source={{ uri: restaurant.imageUrl }}
+                    style={styles.image}
+                  />
+                )}
+                <View style={styles.content}>
+                  <Text style={styles.name}>{restaurant.name}</Text>
+                  <View style={styles.meta}>
+                    <View style={styles.rating}>
+                      <Ionicons
+                        name="star"
+                        size={16}
+                        color={colors.accent.gold}
+                      />
+                      <Text style={styles.ratingText}>{restaurant.rating}</Text>
+                    </View>
+                    <Text style={styles.cuisine}>{restaurant.cuisine}</Text>
+                    <Text style={styles.distance}>
+                      {restaurant.distance} mi
+                    </Text>
                   </View>
-                </View>
-              </View>
-
-              <View style={styles.tagsContainer}>
-                {restaurant.tags.slice(0, 3).map((tag) => (
-                  <View key={tag} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
+                  <View style={styles.highlights}>
+                    {restaurant.highlights?.slice(0, 3).map((highlight, idx) => (
+                      <View key={idx} style={styles.highlight}>
+                        <Text style={styles.highlightText}>{highlight}</Text>
+                      </View>
+                    ))}
                   </View>
-                ))}
-              </View>
-
-              <View style={styles.waitTime}>
-                <Ionicons name="time" size={16} color="#FF6B6B" />
-                <Text style={styles.waitTimeText}>Est. wait: {waitRange}</Text>
-              </View>
-
-              <View style={styles.actions}>
-                <Button
-                  title="Ping Availability"
-                  onPress={() => handlePingAvailability(restaurant.id, restaurant.name)}
-                  variant="primary"
-                  style={styles.actionButton}
-                />
-                <TouchableOpacity
-                  style={styles.secondaryButton}
-                  onPress={() => handleWatch(restaurant.id)}
-                >
-                  <Ionicons name="eye" size={20} color="#FF6B6B" />
-                  <Text style={styles.secondaryButtonText}>Watch</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.secondaryButton}
-                  onPress={() => navigation.navigate('RestaurantDetail' as never, { restaurantId: restaurant.id } as never)}
-                >
-                  <Ionicons name="open" size={20} color="#FF6B6B" />
-                  <Text style={styles.secondaryButtonText}>Open</Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
-          );
-        })}
-      </ScrollView>
-    </SafeAreaView>
+                  <Button
+                    title="View Details"
+                    onPress={() => handleRestaurantPress(restaurant)}
+                    variant="primary"
+                    size="sm"
+                    style={styles.button}
+                  />
+                </View>
+              </Card>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: '#F8F9FA', // Fallback color
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: colors.border.elegant,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
+  title: {
+    ...typography.h1,
+    color: colors.text.primary,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
+  scrollContent: {
+    padding: spacing.lg,
   },
   restaurantCard: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
+    overflow: 'hidden',
   },
-  cardHeader: {
+  image: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+  },
+  content: {
+    gap: spacing.sm,
+  },
+  name: {
+    ...typography.h3,
+    color: colors.text.primary,
+  },
+  meta: {
     flexDirection: 'row',
-    marginBottom: 12,
-  },
-  matchScore: {
-    width: 60,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-    marginRight: 12,
+    gap: spacing.md,
   },
-  matchScoreText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FF6B6B',
+  rating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
-  matchScoreLabel: {
-    fontSize: 10,
-    color: '#7F8C8D',
-  },
-  restaurantInfo: {
-    flex: 1,
-  },
-  restaurantName: {
-    fontSize: 18,
+  ratingText: {
+    ...typography.body,
     fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 4,
+    color: colors.text.primary,
   },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  cuisine: {
+    ...typography.bodySmall,
+    color: colors.text.muted,
   },
-  metaText: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    marginLeft: 4,
+  distance: {
+    ...typography.bodySmall,
+    color: colors.text.muted,
   },
-  tagsContainer: {
+  highlights: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 12,
+    gap: spacing.xs,
   },
-  tag: {
-    backgroundColor: '#F0F0F0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginRight: 6,
-    marginBottom: 4,
+  highlight: {
+    backgroundColor: colors.background.secondary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
   },
-  tagText: {
-    fontSize: 12,
-    color: '#2C3E50',
+  highlightText: {
+    ...typography.caption,
+    color: colors.text.secondary,
   },
-  waitTime: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  waitTimeText: {
-    fontSize: 14,
-    color: '#FF6B6B',
-    marginLeft: 6,
-    fontWeight: '500',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    flex: 1,
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FF6B6B',
-    gap: 4,
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    color: '#FF6B6B',
-    fontWeight: '500',
-  },
-  mapHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  mapHeaderText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-  },
-  mapPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F7F7F7',
-  },
-  mapPlaceholderText: {
-    fontSize: 16,
-    color: '#7F8C8D',
-    marginTop: 16,
+  button: {
+    marginTop: spacing.sm,
   },
 });
-

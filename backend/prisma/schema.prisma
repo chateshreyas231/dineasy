@@ -11,6 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Legacy model - kept for backward compatibility
 model Reservation {
   id            Int      @id @default(autoincrement())
   restaurantName String
@@ -28,5 +29,126 @@ model Reservation {
   @@index([userEmail])
   @@index([dateTime])
   @@index([status])
+}
+
+// New models for v1 Live
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  pushToken     String?  // Expo push notification token
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions      Session[]
+  dinerProfile  DinerProfile?
+  bookings      Booking[]
+  favorites     Favorite[]
+  monitorJobs   MonitorJob[]
+
+  @@index([email])
+}
+
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+  refreshTokenHash String
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshTokenHash])
+  @@index([expiresAt])
+}
+
+model DinerProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  preferences Json?    // Dietary, budget, ambience preferences
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum BookingStatus {
+  DRAFT
+  CONFIRMED
+  PENDING_EXTERNAL
+  MONITORING
+  FAILED
+  CANCELLED
+}
+
+enum BookingProvider {
+  deeplink
+  yelp_reservations
+  opentable_partner
+}
+
+model Booking {
+  id                String          @id @default(uuid())
+  userId            String
+  placeId           String?         // Google Places ID
+  restaurantName    String
+  restaurantAddress String?
+  lat               Float?
+  lng               Float?
+  datetime          DateTime
+  partySize         Int
+  provider          BookingProvider
+  status            BookingStatus   @default(DRAFT)
+  bookingUrl        String?         // Deep link URL for external bookings
+  providerBookingId String?         // External booking ID if available
+  confirmation      Json?           // Provider-specific confirmation data
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([datetime])
+  @@index([provider])
+  @@index([placeId])
+}
+
+model MonitorJob {
+  id              String   @id @default(uuid())
+  userId          String
+  placeId         String
+  timeWindowStart DateTime
+  timeWindowEnd   DateTime
+  partySize       Int
+  status          String   @default("ACTIVE") // ACTIVE, PAUSED, COMPLETED, CANCELLED
+  lastCheckedAt   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([placeId])
+  @@index([timeWindowStart, timeWindowEnd])
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  placeId   String   // Google Places ID
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, placeId])
+  @@index([userId])
+  @@index([placeId])
 }
 

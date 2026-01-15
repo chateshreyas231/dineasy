@@ -1,100 +1,131 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAppStore } from '../store/useAppStore';
+import { useNavigation } from '@react-navigation/native';
 import { Button } from '../components/Button';
 import { AIOrb } from '../components/AIOrb';
-import { AnimatedView } from '../components/AnimatedView';
-import { colors } from '../theme/colors';
+import { colors, typography, spacing } from '../theme';
+import { useAppStore } from '../store/useAppStore';
 
-export function WelcomeScreen() {
-  const setRole = useAppStore((state) => state.setRole);
+export const WelcomeScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const { setRole, user } = useAppStore();
+
+  const handleRoleSelect = (role: 'diner' | 'restaurant') => {
+    setRole(role);
+    // If user is logged in, navigate to app
+    // Otherwise, show login screen
+    if (user) {
+      // Navigation handled by RoleSwitcher
+    } else {
+      navigation.navigate('Login' as never);
+    }
+  };
 
   return (
-    <LinearGradient
-      colors={colors.gradients.background as any}
-      style={styles.container}
-    >
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        style={StyleSheet.absoluteFill}
+      />
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <AnimatedView animation="spring" delay={200}>
-            <View style={styles.logoContainer}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <View style={styles.orbContainer}>
               <AIOrb size={140} />
             </View>
-          </AnimatedView>
-          
-          <AnimatedView animation="slideUp" delay={400}>
-            <Text style={styles.title}>Dineasy</Text>
-            <Text style={styles.subtitle}>Your AI-Powered Dining Assistant</Text>
-            <Text style={styles.tagline}>Intelligent • Conversational • Agentic</Text>
-          </AnimatedView>
 
-          <AnimatedView animation="slideUp" delay={600}>
+            <Text style={styles.title}>Dineasy</Text>
+            <Text style={styles.tagline}>
+              Discover extraordinary dining experiences
+            </Text>
+            <Text style={styles.subtitle}>
+              Curated • Personalized • Effortless
+            </Text>
+
             <View style={styles.buttonContainer}>
               <Button
-                title="Continue as Diner"
-                onPress={() => setRole('diner')}
-                variant="primary"
-                fullWidth
+                title="I'm a Diner"
+                onPress={() => handleRoleSelect('diner')}
+                variant="secondary"
+                size="lg"
+                style={styles.buttonStyle}
               />
               <Button
-                title="Continue as Restaurant"
-                onPress={() => setRole('restaurant')}
+                title="I'm a Restaurant"
+                onPress={() => handleRoleSelect('restaurant')}
                 variant="secondary"
-                fullWidth
+                size="lg"
+                style={styles.buttonStyle}
               />
             </View>
-          </AnimatedView>
-        </View>
+          </View>
+        </ScrollView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F8F9FA', // Fallback color
   },
   safeArea: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
+    padding: spacing.xl,
+    width: '100%', // Ensure full width
   },
-  logoContainer: {
+  content: {
+    alignItems: 'center',
+    width: '100%', // Ensure full width
+  },
+  orbContainer: {
+    marginBottom: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
+    minHeight: 160, // Ensure container has space
   },
   title: {
-    fontSize: 48,
-    fontWeight: '800',
+    ...typography.display,
     color: colors.text.primary,
-    marginBottom: 12,
-    letterSpacing: 1,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  tagline: {
+    ...typography.h2,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 20,
-    color: colors.text.primary,
-    marginBottom: 8,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  tagline: {
-    fontSize: 14,
-    color: colors.primary.light,
-    marginBottom: 48,
-    fontWeight: '500',
-    letterSpacing: 1,
+    ...typography.body,
+    color: colors.text.muted,
+    marginBottom: 48, // spacing['2xl']
     textAlign: 'center',
   },
   buttonContainer: {
     width: '100%',
-    gap: 16,
+    gap: spacing.md,
+    paddingHorizontal: 0, // Ensure no extra padding
+    alignItems: 'stretch', // Ensure buttons fill container width
+  },
+  buttonStyle: {
+    width: '100%',
+    maxWidth: '100%', // Prevent expansion beyond container
+    maxHeight: 60, // Limit button height
   },
 });

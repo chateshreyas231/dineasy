@@ -1,321 +1,327 @@
-import React, { useState, useRef, useEffect } from 'react';
+/**
+ * AI Assistant Screen - Siri-style voice-only interface
+ */
+
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAppStore } from '../store/useAppStore';
-import { colors } from '../theme/colors';
-import { AIOrb } from '../components/AIOrb';
-import { AIChatBubble } from '../components/AIChatBubble';
-import { VoiceInputButton } from '../components/VoiceInputButton';
-import { VoiceWaveform } from '../components/VoiceWaveform';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 
-export function AIAssistantScreen() {
-  const { aiMessages, addAIMessage, isListening, setIsListening, isThinking, setIsThinking } = useAppStore();
-  const [inputText, setInputText] = useState('');
-  const scrollViewRef = useRef<ScrollView>(null);
+import { AIOrb } from '../components/AIOrb';
+import { colors, typography, spacing, radius } from '../theme';
+import { useAppStore } from '../store/useAppStore';
+import { aiAgentService } from '../services/aiAgentService';
+
+const quickReplyRadius = radius.full;
+const confirmButtonRadius = radius.xl;
+const navButtonRadius = radius.full;
+
+export const AIAssistantScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const { user, aiMessages, isThinking, addAIMessage, setThinking } =
+    useAppStore();
+
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
+  const [pendingPlan, setPendingPlan] = useState<any>(null);
+  const [monitoringOffer, setMonitoringOffer] = useState<any>(null);
+  const [statusLine, setStatusLine] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // Auto-scroll to bottom when new messages arrive
-    scrollViewRef.current?.scrollToEnd({ animated: true });
+    if (aiMessages.length === 0) {
+      addAIMessage({
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `Hey${user ? ` ${user.name}` : ''}! How can I help you today?`,
+        timestamp: new Date(),
+      });
+    }
+  }, []);
+
+
+  const lastUserText = useMemo(() => {
+    return [...aiMessages].reverse().find((m) => m.role === 'user')?.content ?? '';
   }, [aiMessages]);
 
-  const handleSendMessage = async (text: string) => {
-    if (!text.trim()) return;
+  const lastAssistantText = useMemo(() => {
+    return [...aiMessages].reverse().find((m) => m.role === 'assistant')?.content ?? '';
+  }, [aiMessages]);
 
-    // Add user message
-    addAIMessage({ text: text.trim(), isUser: true });
-    setInputText('');
+  const runAgentTurn = async (text: string) => {
+    const t = text.trim();
+    if (!t || isProcessing) return;
 
-    // Show thinking state
-    setIsThinking(true);
+    setIsProcessing(true);
+    setThinking(true);
 
-    // Simulate AI response (replace with actual AI API call)
-    setTimeout(() => {
-      setIsThinking(false);
-      const response = generateAIResponse(text);
-      addAIMessage({ text: response, isUser: false });
-    }, 1500);
-  };
+    addAIMessage({
+      id: Date.now().toString(),
+      role: 'user',
+      content: t,
+      timestamp: new Date(),
+    });
 
-  const handleVoiceInput = () => {
-    if (isListening) {
-      setIsListening(false);
-      // Process voice input here
-    } else {
-      setIsListening(true);
-      // Start voice recognition here
-      setTimeout(() => {
-        setIsListening(false);
-        // Simulate voice input
-        const voiceText = "Find me a restaurant for dinner tonight";
-        handleSendMessage(voiceText);
-      }, 3000);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    try {
+      const reply = await aiAgentService.handleUserMessage(t);
+
+      setQuickReplies(reply.quickReplies || []);
+      setPendingPlan(reply.pendingPlan || null);
+      setMonitoringOffer(reply.monitoringOffer || null);
+      setStatusLine(reply.statusLine || '');
+
+      addAIMessage({
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: reply.assistantText,
+        timestamp: new Date(),
+      });
+    } catch (error) {
+      console.error('Agent error:', error);
+      addAIMessage({
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Something went wrong. Try again.',
+        timestamp: new Date(),
+      });
+    } finally {
+      setThinking(false);
+      setIsProcessing(false);
     }
   };
 
-  const generateAIResponse = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('restaurant') || lowerMessage.includes('dinner') || lowerMessage.includes('eat')) {
-      return "I'd be happy to help you find the perfect restaurant! What type of cuisine are you in the mood for? I can also check availability and make reservations for you.";
+
+  const handleConfirmBooking = async () => {
+    if (!pendingPlan || !user || isProcessing) return;
+
+    setIsProcessing(true);
+    setThinking(true);
+    setStatusLine('booking…');
+
+    try {
+      const result = await aiAgentService.confirmBooking({
+        name: user.name,
+        email: user.email,
+        phone: '',
+      });
+
+      setThinking(false);
+      setIsProcessing(false);
+      setStatusLine('');
+
+      if (result.success) {
+        addAIMessage({
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `Booked ✅ ${result.restaurant?.name}. ${result.redirectUrl ? 'Open the link to finish if needed.' : 'Reservation confirmed!'}`,
+          timestamp: new Date(),
+        });
+        setPendingPlan(null);
+        setQuickReplies([]);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        addAIMessage({
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `Booking failed. Want to try another option?`,
+          timestamp: new Date(),
+        });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } catch (error) {
+      setThinking(false);
+      setIsProcessing(false);
+      setStatusLine('');
+      addAIMessage({
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `Booking error. Please try again.`,
+        timestamp: new Date(),
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-    if (lowerMessage.includes('reservation') || lowerMessage.includes('table') || lowerMessage.includes('book')) {
-      return "I can help you make a reservation! Let me check available restaurants near you. What time and party size are you looking for?";
-    }
-    if (lowerMessage.includes('recommend') || lowerMessage.includes('suggest')) {
-      return "Based on your preferences, I'd recommend checking out some Italian or Japanese restaurants nearby. Would you like me to show you options with available tables?";
-    }
-    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-      return "Hello! I'm your AI dining assistant. I can help you find restaurants, make reservations, and plan your perfect dining experience. What would you like to do today?";
-    }
-    
-    return "I understand you're looking for dining options. Let me help you find the perfect restaurant! What are you in the mood for?";
+  };
+
+  const handleNavigateToTabs = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Navigate to BrowseHome (the actual home screen within Browse stack)
+    (navigation as any).navigate('Browse', { screen: 'BrowseHome' });
   };
 
   return (
-    <LinearGradient colors={colors.gradients.background} style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>AI Assistant</Text>
-          <Text style={styles.headerSubtitle}>Your intelligent dining companion</Text>
+    <View style={styles.container}>
+      <LinearGradient colors={['#FFFFFF', '#F6F7FB']} style={StyleSheet.absoluteFill} />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {/* Navigation Button - Bottom Right Dot */}
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={handleNavigateToTabs}
+          activeOpacity={0.7}
+        >
+          <View style={styles.navDot} />
+        </TouchableOpacity>
+
+        {/* BIG TEXT AREA - Top 60% */}
+        <View style={styles.bigTextArea}>
+          {!!lastUserText && (
+            <Text style={styles.userBigText}>{lastUserText}</Text>
+          )}
+
+          {!!statusLine && (
+            <Text style={styles.statusLine}>{statusLine}</Text>
+          )}
+
+          <Text style={styles.assistantBigText}>
+            {lastAssistantText || "Hey! How can I help you today?"}
+          </Text>
         </View>
 
-        {/* AI Orb - Show when not chatting or thinking */}
-        {aiMessages.length === 0 && !isThinking && (
-          <View style={styles.orbContainer}>
-            <AIOrb size={180} listening={isListening} thinking={isThinking} />
-            <Text style={styles.orbStatus}>
-              {isListening ? 'Listening...' : 'Ready to help'}
-            </Text>
-          </View>
-        )}
+        {/* ORB + CONTROLS - Bottom 40% */}
+        <View style={styles.bottomArea}>
+          <AIOrb 
+            size={120} 
+            isListening={false} 
+            isThinking={isThinking || isProcessing} 
+          />
 
-        {/* Chat Messages */}
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.messagesContainer}
-          contentContainerStyle={styles.messagesContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {aiMessages.length === 0 && (
-            <View style={styles.welcomeContainer}>
-              <Text style={styles.welcomeTitle}>Welcome to AI Assistant</Text>
-              <Text style={styles.welcomeText}>
-                I can help you find restaurants, make reservations, and plan your dining experience.
-                {'\n\n'}
-                Try saying: "Find me a restaurant for dinner" or "Make a reservation for 2 people"
-              </Text>
-            </View>
-          )}
-
-          {aiMessages.map((message) => (
-            <AIChatBubble
-              key={message.id}
-              message={message.text}
-              isUser={message.isUser}
-              timestamp={message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            />
-          ))}
-
-          {isThinking && (
-            <View style={styles.thinkingContainer}>
-              <View style={styles.thinkingBubble}>
-                <View style={styles.thinkingDots}>
-                  <View style={[styles.dot, styles.dot1]} />
-                  <View style={[styles.dot, styles.dot2]} />
-                  <View style={[styles.dot, styles.dot3]} />
-                </View>
-              </View>
-            </View>
-          )}
-        </ScrollView>
-
-        {/* Input Area */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.inputContainer}
-        >
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Type a message..."
-              placeholderTextColor={colors.text.muted}
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-              onSubmitEditing={() => handleSendMessage(inputText)}
-            />
-            {isListening ? (
-              <TouchableOpacity onPress={handleVoiceInput} style={styles.voiceButton}>
-                <VoiceWaveform listening={true} maxHeight={24} barCount={3} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity onPress={handleVoiceInput} style={styles.voiceButton}>
-                <Ionicons name="mic" size={24} color={colors.primary.main} />
-              </TouchableOpacity>
-            )}
-            {inputText.trim() && (
-              <TouchableOpacity
-                onPress={() => handleSendMessage(inputText)}
-                style={styles.sendButton}
-              >
-                <LinearGradient
-                  colors={colors.gradients.primary}
-                  style={styles.sendButtonGradient}
+          {/* QUICK REPLIES */}
+          {quickReplies.length > 0 && (
+            <View style={styles.quickRepliesWrap}>
+              {quickReplies.map((r) => (
+                <TouchableOpacity
+                  key={r}
+                  onPress={() => runAgentTurn(r)}
+                  style={styles.quickReplyChip}
+                  activeOpacity={0.8}
+                  disabled={isProcessing}
                 >
-                  <Ionicons name="send" size={20} color="#FFFFFF" />
-                </LinearGradient>
-              </TouchableOpacity>
-            )}
-          </View>
-        </KeyboardAvoidingView>
+                  <Text style={styles.quickReplyText}>{r}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* CONFIRM BOOKING CTA */}
+          {pendingPlan && (
+            <TouchableOpacity
+              onPress={handleConfirmBooking}
+              activeOpacity={0.85}
+              disabled={isProcessing}
+              style={[styles.confirmButton, isProcessing && styles.confirmButtonDisabled]}
+            >
+              <Text style={styles.confirmButtonText}>Confirm booking</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFF',
   },
   safeArea: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text.primary,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: colors.text.secondary,
-  },
-  orbContainer: {
+  navButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: spacing.lg,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    zIndex: 1000,
   },
-  orbStatus: {
-    marginTop: 20,
-    fontSize: 16,
-    color: colors.text.secondary,
-    fontWeight: '500',
+  navDot: {
+    width: 18,
+    height: 18,
+    borderRadius: navButtonRadius,
+    backgroundColor: colors.text.muted,
   },
-  messagesContainer: {
-    flex: 1,
-  },
-  messagesContent: {
-    paddingVertical: 20,
-  },
-  welcomeContainer: {
-    padding: 24,
+  bigTextArea: {
+    flex: 0.6,
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: spacing.xl,
   },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+  userBigText: {
+    textAlign: 'center',
+    fontSize: 40,
+    fontWeight: '800',
+    lineHeight: 46,
     color: colors.text.primary,
-    marginBottom: 12,
+    marginBottom: spacing.lg,
+  },
+  statusLine: {
     textAlign: 'center',
+    fontSize: 13,
+    color: colors.text.muted,
+    marginBottom: spacing.md,
+    fontStyle: 'italic',
   },
-  welcomeText: {
-    fontSize: 16,
-    color: colors.text.secondary,
+  assistantBigText: {
     textAlign: 'center',
-    lineHeight: 24,
+    fontSize: 34,
+    fontWeight: '800',
+    lineHeight: 40,
+    color: colors.text.primary,
   },
-  thinkingContainer: {
-    alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  thinkingBubble: {
-    backgroundColor: colors.background.card,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
-    borderTopLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.border.light,
-  },
-  thinkingDots: {
-    flexDirection: 'row',
+  bottomArea: {
+    flex: 0.4,
     alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    justifyContent: 'center',
+    gap: spacing.md,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primary.main,
-    marginHorizontal: 3,
-  },
-  dot1: {
-    opacity: 0.4,
-  },
-  dot2: {
-    opacity: 0.7,
-  },
-  dot3: {
-    opacity: 1,
-  },
-  inputContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border.light,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: colors.background.card,
-    borderRadius: 24,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.border.light,
-  },
-  textInput: {
-    flex: 1,
-    color: colors.text.primary,
-    fontSize: 16,
-    maxHeight: 100,
-    paddingVertical: 8,
-  },
-  voiceButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginLeft: 8,
-    overflow: 'hidden',
-  },
-  sendButtonGradient: {
+  quickRepliesWrap: {
     width: '100%',
-    height: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
+    gap: 10,
+    maxHeight: 120,
+  },
+  quickReplyChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: quickReplyRadius,
+    backgroundColor: colors.background.secondary,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  quickReplyText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text.primary,
+  },
+  confirmButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: confirmButtonRadius,
+    backgroundColor: colors.primary.main,
     alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  confirmButtonDisabled: {
+    opacity: 0.6,
+  },
+  confirmButtonText: {
+    color: colors.text.inverse,
+    fontSize: 16,
+    fontWeight: '800',
   },
 });
-

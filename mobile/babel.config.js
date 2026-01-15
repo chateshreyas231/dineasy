@@ -2,8 +2,10 @@ module.exports = function(api) {
   api.cache(true);
   return {
     presets: ['babel-preset-expo'],
-    // Reanimated plugin removed - using standard Animated API for Expo Go compatibility
-    // plugins: ['react-native-reanimated/plugin'],
+    plugins: [
+      // Temporarily disabled - reanimated requires worklets which needs native build
+      // Uncomment after building development client or when using compatible Expo version
+      // 'react-native-reanimated/plugin',
+    ],
   };
 };
-

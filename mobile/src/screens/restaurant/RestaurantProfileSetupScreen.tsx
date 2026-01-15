@@ -1,159 +1,105 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useAppStore } from '../../store/useAppStore';
-import { Button } from '../../components/Button';
-import { Chip } from '../../components/Chip';
-import { Input } from '../../components/Input';
 import { Card } from '../../components/Card';
-import { SectionHeader } from '../../components/SectionHeader';
+import { Input } from '../../components/Input';
+import { Button } from '../../components/Button';
+import { colors, typography, spacing } from '../../theme';
 
-const vibeOptions = ['Quiet', 'Live Music', 'Romantic', 'Family', 'Sports', 'Upscale', 'Casual'];
-const cuisineOptions = ['Italian', 'Mexican', 'Japanese', 'American', 'French', 'Mediterranean', 'Asian', 'Indian'];
-const priceOptions = ['$', '$$', '$$$'];
-
-export function RestaurantProfileSetupScreen() {
+export const RestaurantProfileSetupScreen: React.FC = () => {
   const navigation = useNavigation();
-  const restaurantProfile = useAppStore((state) => state.restaurantProfile);
-  const setRestaurantProfile = useAppStore((state) => state.setRestaurantProfile);
-  const [vibeTags, setVibeTags] = useState<string[]>(restaurantProfile?.vibeTags || []);
-  const [cuisine, setCuisine] = useState<string[]>(restaurantProfile?.cuisine || []);
-  const [hours, setHours] = useState(restaurantProfile?.hours || '');
-  const [avgPrice, setAvgPrice] = useState<1 | 2 | 3>(restaurantProfile?.avgPrice || 2);
-  const [maxHolds, setMaxHolds] = useState(restaurantProfile?.maxHolds || 5);
+  const [address, setAddress] = React.useState('');
+  const [phone, setPhone] = React.useState('');
+  const [cuisine, setCuisine] = React.useState('');
 
-  const toggleVibe = (tag: string) => {
-    setVibeTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
-  };
-
-  const toggleCuisine = (tag: string) => {
-    setCuisine((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
-  };
-
-  const handleSave = () => {
-    if (restaurantProfile) {
-      setRestaurantProfile({
-        ...restaurantProfile,
-        vibeTags,
-        cuisine,
-        hours,
-        avgPrice,
-        maxHolds,
-      });
-    }
-    // Navigate to main restaurant app
-    navigation.navigate('Status' as never);
+  const handleComplete = () => {
+    navigation.navigate('RestaurantHomeStatus' as never);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <SectionHeader title="Set Restaurant Profile" />
+    <LinearGradient
+      colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Complete Your Profile</Text>
+          <Text style={styles.subtitle}>
+            Add your restaurant details
+          </Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vibe Tags</Text>
-          <View style={styles.chipContainer}>
-            {vibeOptions.map((option) => (
-              <Chip
-                key={option}
-                label={option}
-                selected={vibeTags.includes(option)}
-                onPress={() => toggleVibe(option)}
-              />
-            ))}
-          </View>
-        </View>
+          <Card style={styles.card}>
+            <Input
+              label="Address"
+              placeholder="123 Main St, City, State"
+              value={address}
+              onChangeText={setAddress}
+            />
+            <Input
+              label="Phone Number"
+              placeholder="(555) 123-4567"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+            />
+            <Input
+              label="Cuisine Type"
+              placeholder="e.g., Italian, French, Japanese"
+              value={cuisine}
+              onChangeText={setCuisine}
+            />
+          </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Cuisine</Text>
-          <View style={styles.chipContainer}>
-            {cuisineOptions.map((option) => (
-              <Chip
-                key={option}
-                label={option}
-                selected={cuisine.includes(option)}
-                onPress={() => toggleCuisine(option)}
-              />
-            ))}
-          </View>
-        </View>
-
-        <Card style={styles.card}>
-          <Input
-            label="Hours"
-            value={hours}
-            onChangeText={setHours}
-            placeholder="e.g., Mon-Fri: 11am-10pm, Sat-Sun: 10am-11pm"
+          <Button
+            title="Complete Setup"
+            onPress={handleComplete}
+            variant="primary"
+            size="lg"
+            style={styles.button}
           />
-        </Card>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Average Price</Text>
-          <View style={styles.chipContainer}>
-            {priceOptions.map((option, index) => {
-              const level = (index + 1) as 1 | 2 | 3;
-              return (
-                <Chip
-                  key={option}
-                  label={option}
-                  selected={avgPrice === level}
-                  onPress={() => setAvgPrice(level)}
-                />
-              );
-            })}
-          </View>
-        </View>
-
-        <Card style={styles.card}>
-          <Input
-            label="Max Holds"
-            value={maxHolds.toString()}
-            onChangeText={(text) => setMaxHolds(parseInt(text) || 5)}
-            placeholder="5"
-            keyboardType="number-pad"
-          />
-          <Text style={styles.hint}>Maximum number of table holds at once</Text>
-        </Card>
-
-        <Button title="Save & Continue" onPress={handleSave} variant="primary" fullWidth />
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
+  scrollContent: {
+    padding: spacing.lg,
   },
-  section: {
-    marginBottom: 32,
+  title: {
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 12,
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  subtitle: {
+    ...typography.body,
+    color: colors.text.muted,
+    marginBottom: spacing.xl,
   },
   card: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
-  hint: {
-    fontSize: 12,
-    color: '#7F8C8D',
-    marginTop: 8,
+  button: {
+    marginTop: spacing.md,
   },
 });
-

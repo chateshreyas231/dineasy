@@ -77,3 +77,4 @@ export class GoogleReserveAdapter implements PlatformAdapter {
 }
 
 
+

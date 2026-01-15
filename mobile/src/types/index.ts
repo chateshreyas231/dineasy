@@ -1,74 +1,129 @@
-export type Role = 'diner' | 'restaurant' | null;
+/**
+ * TypeScript Type Definitions
+ */
 
-export interface Restaurant {
+export type UserRole = 'diner' | 'restaurant';
+
+export interface User {
   id: string;
+  email: string;
   name: string;
-  distance: number; // in miles
-  tags: string[];
-  priceLevel: 1 | 2 | 3; // $, $$, $$$
-  estWaitMinRange: [number, number];
-  photoUrl?: string;
-  cuisine: string[];
-  vibe: string[];
-  address: string;
-  highlights: string[];
-  bestTimes: string[];
-}
-
-export interface Intent {
-  query?: string;
-  locationLabel: string;
-  timeWindow: 'now' | 'later' | string;
-  partySize: number;
-  waitTolerance: '0-15' | '15-30' | '30-60' | '60+';
-  vibeTags: string[];
-  cuisineTags: string[];
-  mustHaves: string[];
-  dishesLike?: string;
-}
-
-export type RequestStatus = 'sent' | 'seen' | 'confirmed' | 'alternate' | 'declined';
-
-export interface Request {
-  id: string;
-  restaurantId: string;
-  restaurantName: string;
-  partySize: number;
-  timeWindow: string;
-  notes?: string;
-  status: RequestStatus;
-  alternateTimes?: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Watch {
-  id: string;
-  geoLabel: string;
-  radius: number; // in miles
-  timeRange: string;
-  vibeTags: string[];
-  notificationsEnabled: boolean;
+  role: UserRole;
+  isAdmin?: boolean; // Temporary admin flag
 }
 
 export interface Preferences {
   dietary: string[];
-  budget: (1 | 2 | 3)[];
+  budget: 'low' | 'medium' | 'high' | 'luxury';
   ambience: string[];
+  cuisine: string[];
+}
+
+export interface QueryIntent {
+  partySize?: number;
+  dateTime?: Date | string; // Can be Date object or ISO string
+  cuisine?: string;
+  location?: string;
+  occasion?: string;
+  vibe?: string[];
+  budget?: string;
+}
+
+export interface Restaurant {
+  id: string;
+  name: string;
+  cuisine: string;
+  rating: number;
+  priceLevel: number;
+  location: string;
+  distance?: number;
+  imageUrl?: string;
+  highlights?: string[];
+  bestTimes?: string[];
+  bookingLink?: string;
+  platform?: string;
+}
+
+export interface TableRequest {
+  id: string;
+  restaurantId: string;
+  restaurantName: string;
+  dateTime: Date;
+  partySize: number;
+  status: 'pending' | 'confirmed' | 'declined' | 'cancelled';
+  notes?: string;
+  alternateTimes?: Date[];
+}
+
+export interface Booking {
+  id: string;
+  restaurantId: string;
+  restaurantName: string;
+  dateTime: Date;
+  partySize: number;
+  status: 'confirmed' | 'pending' | 'cancelled';
+  bookingLink?: string;
+  provider?: string;
+}
+
+export interface AIMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
+export interface AIState {
+  isListening: boolean;
+  isThinking: boolean;
+  messages: AIMessage[];
 }
 
 export interface RestaurantProfile {
+  id: string;
   name: string;
   address: string;
-  phone: string;
-  verified: boolean;
-  vibeTags: string[];
-  hours: string;
-  cuisine: string[];
-  avgPrice: 1 | 2 | 3;
-  maxHolds: number;
-  timeWindows: string[];
+  phone?: string;
+  email?: string;
+  cuisine?: string;
+  hours?: Record<string, string>;
+  status: 'open' | 'closed' | 'busy';
+  nextAvailable?: Date;
 }
 
-export type RestaurantStatus = 'open' | 'moderate' | 'busy' | 'full';
+export interface AIActivity {
+  id: string;
+  type: 'question' | 'thinking' | 'searching' | 'checking' | 'booking' | 'success' | 'error';
+  message: string;
+  timestamp: Date;
+  data?: any;
+}
 
+export interface RestaurantOption {
+  id: string;
+  restaurantId?: string;
+  placeId?: string;
+  name: string;
+  platform: string;
+  dateTime: string; // ISO string
+  partySize: number;
+  cuisine?: string;
+  location?: string;
+  rating?: number;
+  bookingLink?: string;
+  photoUrl?: string;
+}
+
+export interface BookingRequest {
+  platform: string;
+  restaurantName: string;
+  restaurantId?: string;
+  dateTime: string;
+  partySize: number;
+  userContact: {
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  bookingLink?: string;
+}

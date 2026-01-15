@@ -32,3 +32,4 @@ echo "2. Run: npx prisma migrate dev"
 echo "3. Run: npm run dev"
 
 
+

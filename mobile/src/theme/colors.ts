@@ -1,67 +1,81 @@
-// Dineasy Theme Colors - Modern Dark Theme with Purple/Pink Gradients
+/**
+ * Glassmorphism Theme - Color System
+ * Soft, translucent elements with pastel gradients
+ */
+
 export const colors = {
-  // Backgrounds
-  background: {
-    primary: '#0A0A0F',
-    secondary: '#1A1A2E',
-    tertiary: '#16213E',
-    card: '#1E1E2E',
-    cardHover: '#252538',
-  },
-  
-  // Primary gradient colors (Purple/Pink)
+  // Primary Colors - Pink to Purple Gradient
   primary: {
-    light: '#A855F7', // Purple
-    main: '#9333EA', // Purple
-    dark: '#7C3AED', // Dark Purple
-    glow: '#EC4899', // Pink
+    main: '#FF6B92', // Vibrant pink
+    light: '#FFB3D1', // Light pink
+    dark: '#E91E63', // Darker pink
+    glow: '#FFE5F0', // Subtle pink glow
   },
-  
-  // Accent colors
+
+  // Accent Colors
   accent: {
-    purple: '#9333EA',
-    pink: '#EC4899',
-    violet: '#8B5CF6',
-    fuchsia: '#D946EF',
+    purple: '#B66DFF', // Soft purple
+    lavender: '#D4A5FF', // Light lavender
+    pink: '#FF6B92', // Pastel pink
+    blue: '#6B9FFF', // Medium blue
+    indigo: '#8B7FFF', // Indigo accent
+    rose: '#FFB3D1', // Rose pink
+    violet: '#B66DFF', // Violet
+    lightPurple: '#D4A5FF', // Light purple
   },
-  
-  // Text
+
+  // Backgrounds - Very light with subtle gradients
+  background: {
+    primary: '#F8F9FA', // Very light off-white
+    secondary: '#FFFFFF', // Pure white
+    tertiary: '#F0F2F5', // Light gray
+    elevated: '#FFFFFF', // Pure white for elevated surfaces
+    card: '#FFFFFF', // Clean white cards with transparency
+    cardHover: '#FAFBFC', // Subtle hover state
+    chatAI: '#F5F7FA', // AI chat bubble background
+    glass: 'rgba(255, 255, 255, 0.7)', // Glassmorphism effect
+  },
+
+  // Text Colors - Dark for readability
   text: {
-    primary: '#FFFFFF',
-    secondary: '#E5E7EB',
-    tertiary: '#9CA3AF',
-    muted: '#6B7280',
+    primary: '#333333', // Dark charcoal for headings
+    secondary: '#666666', // Medium gray
+    tertiary: '#888888', // Lighter gray for descriptions
+    muted: '#888888', // Muted gray for secondary text
+    disabled: '#CCCCCC', // Disabled state
+    inverse: '#FFFFFF', // White text on dark backgrounds
   },
-  
-  // Borders
+
+  // Borders - Very subtle
   border: {
-    light: '#2D2D3E',
-    medium: '#3D3D4E',
-    dark: '#1D1D2E',
+    light: '#F0F0F0', // Very subtle gray
+    medium: '#E8E8E8', // Standard border
+    dark: '#DDDDDD', // Stronger border
+    focus: '#FF6B92', // Focus state (pink)
+    elegant: 'rgba(255, 107, 146, 0.2)', // Soft pink subtle border
   },
-  
-  // Status colors
+
+  // Status Colors
   status: {
-    success: '#10B981',
-    warning: '#F59E0B',
-    error: '#EF4444',
-    info: '#3B82F6',
-  },
-  
-  // Overlays
-  overlay: {
-    light: 'rgba(147, 51, 234, 0.1)',
-    medium: 'rgba(147, 51, 234, 0.2)',
-    dark: 'rgba(0, 0, 0, 0.5)',
-  },
-  
-  // Gradients
-  gradients: {
-    primary: ['#9333EA', '#EC4899'] as const, // Purple to Pink
-    secondary: ['#7C3AED', '#A855F7'] as const, // Dark Purple to Purple
-    accent: ['#EC4899', '#F472B6'] as const, // Pink to Light Pink
-    background: ['#0A0A0F', '#1A1A2E', '#16213E'] as const, // Dark gradient
-    card: ['#1E1E2E', '#252538'] as const, // Card gradient
+    success: '#4CAF50',
+    warning: '#FF9800',
+    error: '#F44336',
+    info: '#2196F3',
   },
 };
 
+// Gradient definitions
+export const gradients = {
+  // Primary action gradient - Pink to Purple
+  primary: ['#FF6B92', '#B66DFF'], // Pink to purple
+  // Background gradient - Blue to Purple (for special elements)
+  background: ['#6B9FFF', '#B66DFF'], // Blue to purple
+  // Soft background gradient
+  soft: ['#F8F9FA', '#FFFFFF', '#F0F2F5'], // Very light gray-white
+  // Elegant gradient
+  elegant: ['#FF6B92', '#B66DFF', '#8B7FFF'], // Pink to purple to indigo
+  // Chat gradient
+  chat: ['#F5F7FA', '#FFFFFF'], // Light gray to white
+  // Glassmorphism gradient
+  glass: ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.6)'],
+};

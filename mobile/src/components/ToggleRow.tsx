@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Switch, StyleSheet, TouchableOpacity } from 'react-native';
+import { colors, typography, spacing } from '../theme';
 
 interface ToggleRowProps {
   label: string;
@@ -8,9 +9,18 @@ interface ToggleRowProps {
   description?: string;
 }
 
-export function ToggleRow({ label, value, onValueChange, description }: ToggleRowProps) {
+export const ToggleRow: React.FC<ToggleRowProps> = ({
+  label,
+  value,
+  onValueChange,
+  description,
+}) => {
   return (
-    <View style={styles.container}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={() => onValueChange(!value)}
+      activeOpacity={0.7}
+    >
       <View style={styles.content}>
         <Text style={styles.label}>{label}</Text>
         {description && <Text style={styles.description}>{description}</Text>}
@@ -18,35 +28,36 @@ export function ToggleRow({ label, value, onValueChange, description }: ToggleRo
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: '#E0E0E0', true: '#FF6B6B' }}
-        thumbColor="#FFFFFF"
+        trackColor={{
+          false: colors.border.medium,
+          true: colors.primary.main,
+        }}
+        thumbColor={colors.background.card}
       />
-    </View>
+    </TouchableOpacity>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   content: {
     flex: 1,
-    marginRight: 16,
+    marginRight: spacing.md,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#2C3E50',
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.text.primary,
   },
   description: {
-    fontSize: 12,
-    color: '#7F8C8D',
-    marginTop: 4,
+    ...typography.bodySmall,
+    color: colors.text.muted,
+    marginTop: spacing.xs,
   },
 });
-

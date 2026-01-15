@@ -26,14 +26,50 @@ export default function Home() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-      const response = await fetch(`${apiUrl}/api/search?query=${encodeURIComponent(query)}`)
+      
+      // Try to get user location (optional)
+      let lat: number | undefined
+      let lng: number | undefined
+      
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject)
+          })
+          lat = position.coords.latitude
+          lng = position.coords.longitude
+        } catch (err) {
+          console.warn('Location not available:', err)
+        }
+      }
+
+      const params = new URLSearchParams({ query })
+      if (lat !== undefined) params.append('lat', lat.toString())
+      if (lng !== undefined) params.append('lng', lng.toString())
+      params.append('radiusMeters', '5000') // 5km radius
+
+      const response = await fetch(`${apiUrl}/api/restaurants/search?${params.toString()}`)
       
       if (!response.ok) {
         throw new Error(`Search failed: ${response.statusText}`)
       }
 
-      const data: SearchResponse = await response.json()
-      setResults(data.results)
+      const data = await response.json()
+      // Transform API response to match RestaurantOption format
+      const transformedResults = (data.results || []).map((r: any) => ({
+        name: r.name,
+        platform: 'Google Places',
+        dateTime: new Date().toISOString(), // Placeholder
+        partySize: 2,
+        cuisine: r.types?.filter((t: string) => t.includes('restaurant')) || [],
+        location: r.address,
+        rating: r.rating,
+        bookingLink: r.website || r.googleMapsUrl,
+        placeId: r.placeId,
+        lat: r.lat,
+        lng: r.lng,
+      }))
+      setResults(transformedResults)
     } catch (err) {
       console.error('Search error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred while searching')
@@ -224,7 +260,7 @@ export default function Home() {
             <div className="space-y-4">
               {results.map((restaurant, idx) => (
                 <RestaurantCard
-                  key={`${restaurant.name}-${restaurant.platform}-${idx}`}
+                  key={`${restaurant.placeId || restaurant.name}-${idx}`}
                   restaurant={restaurant}
                   onBook={handleBook}
                 />

@@ -1,31 +1,43 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../theme/colors';
+import * as Haptics from 'expo-haptics';
+import { colors, typography, radius, spacing } from '../theme';
 
 interface ChipProps {
   label: string;
   selected?: boolean;
   onPress?: () => void;
-  disabled?: boolean;
+  style?: ViewStyle;
 }
 
-export function Chip({ label, selected = false, onPress, disabled = false }: ChipProps) {
+export const Chip: React.FC<ChipProps> = ({
+  label,
+  selected = false,
+  onPress,
+  style,
+}) => {
+  const handlePress = () => {
+    if (onPress) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onPress();
+    }
+  };
+
   if (selected) {
     return (
       <TouchableOpacity
-        onPress={onPress}
-        disabled={disabled}
-        activeOpacity={0.7}
-        style={[styles.chip, disabled && styles.disabled]}
+        onPress={handlePress}
+        activeOpacity={0.8}
+        style={[styles.chip, styles.chipSelected, style]}
       >
         <LinearGradient
-          colors={colors.gradients.primary}
+          colors={['#FF6B92', '#B66DFF']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={styles.gradient}
         >
-          <Text style={styles.selectedText}>{label}</Text>
+          <Text style={styles.textSelected}>{label}</Text>
         </LinearGradient>
       </TouchableOpacity>
     );
@@ -33,48 +45,49 @@ export function Chip({ label, selected = false, onPress, disabled = false }: Chi
 
   return (
     <TouchableOpacity
-      style={[styles.chip, styles.unselected, disabled && styles.disabled]}
-      onPress={onPress}
-      disabled={disabled}
-      activeOpacity={0.7}
+      onPress={handlePress}
+      activeOpacity={0.8}
+      style={[styles.chip, styles.chipUnselected, style]}
     >
-      <Text style={styles.text}>{label}</Text>
+      <Text style={styles.textUnselected}>{label}</Text>
     </TouchableOpacity>
   );
-}
+};
 
 const styles = StyleSheet.create({
   chip: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 20,
-    marginRight: 8,
-    marginBottom: 8,
-    overflow: 'hidden',
-  },
-  gradient: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 20,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    minHeight: 40, // Slightly taller for better touch target
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  unselected: {
+  chipSelected: {
+    borderWidth: 0,
+  },
+  chipUnselected: {
     backgroundColor: colors.background.card,
-    borderWidth: 1,
-    borderColor: colors.border.light,
+    borderWidth: 1.5,
+    borderColor: colors.border.elegant,
   },
-  disabled: {
-    opacity: 0.5,
+  gradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  text: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    fontWeight: '500',
-  },
-  selectedText: {
-    fontSize: 14,
-    color: '#FFFFFF',
+  textSelected: {
+    ...typography.body,
     fontWeight: '600',
+    color: colors.text.inverse,
+  },
+  textUnselected: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.text.primary,
   },
 });

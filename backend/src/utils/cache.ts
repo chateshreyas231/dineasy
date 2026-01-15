@@ -101,6 +101,45 @@ export async function clearCache(intent: QueryIntent): Promise<void> {
 }
 
 /**
+ * Generic cache get
+ */
+export async function getCache(key: string): Promise<any | null> {
+  if (!redisClient) {
+    await initCache();
+  }
+
+  try {
+    const cached = await redisClient!.get(key);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (error) {
+    console.error('Error reading from cache:', error);
+  }
+
+  return null;
+}
+
+/**
+ * Generic cache set
+ */
+export async function setCache(
+  key: string,
+  value: any,
+  ttlSeconds: number = 600
+): Promise<void> {
+  if (!redisClient) {
+    await initCache();
+  }
+
+  try {
+    await redisClient!.setEx(key, ttlSeconds, JSON.stringify(value));
+  } catch (error) {
+    console.error('Error writing to cache:', error);
+  }
+}
+
+/**
  * Close Redis connection
  */
 export async function closeCache(): Promise<void> {
@@ -109,5 +148,6 @@ export async function closeCache(): Promise<void> {
     redisClient = null;
   }
 }
+
 
 

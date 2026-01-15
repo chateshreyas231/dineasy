@@ -2,93 +2,92 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppStore } from '../store/useAppStore';
-import { colors } from '../theme/colors';
-import { RestaurantWelcomeScreen } from '../screens/restaurant/RestaurantWelcomeScreen';
-import { ClaimVerifyScreen } from '../screens/restaurant/ClaimVerifyScreen';
-import { RestaurantProfileSetupScreen } from '../screens/restaurant/RestaurantProfileSetupScreen';
+import { colors } from '../theme';
 import { RestaurantHomeStatusScreen } from '../screens/restaurant/RestaurantHomeStatusScreen';
 import { RequestsInboxScreen } from '../screens/restaurant/RequestsInboxScreen';
 import { RequestDetailScreen } from '../screens/restaurant/RequestDetailScreen';
 import { HoldsScreen } from '../screens/restaurant/HoldsScreen';
 import { InsightsScreen } from '../screens/restaurant/InsightsScreen';
 import { RestaurantSettingsScreen } from '../screens/restaurant/RestaurantSettingsScreen';
+import { TableMapScreen } from '../screens/restaurant/TableMapScreen';
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const RequestsStack = createNativeStackNavigator();
 
-function RestaurantOnboardingStack() {
-  const restaurantProfile = useAppStore((state) => state.restaurantProfile);
-  
-  if (!restaurantProfile) {
-    return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="RestaurantWelcome" component={RestaurantWelcomeScreen} />
-        <Stack.Screen name="ClaimVerify" component={ClaimVerifyScreen} />
-        <Stack.Screen name="RestaurantProfileSetup" component={RestaurantProfileSetupScreen} />
-      </Stack.Navigator>
-    );
-  }
-  
-  return null;
-}
+const RequestsStackNavigator = () => (
+  <RequestsStack.Navigator screenOptions={{ headerShown: false }}>
+    <RequestsStack.Screen name="RequestsInbox" component={RequestsInboxScreen} />
+    <RequestsStack.Screen name="RequestDetail" component={RequestDetailScreen} />
+  </RequestsStack.Navigator>
+);
 
-function RequestsStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="RequestsInbox"
-        component={RequestsInboxScreen}
-        options={{ title: 'Incoming Requests' }}
-      />
-      <Stack.Screen
-        name="RequestDetail"
-        component={RequestDetailScreen}
-        options={{ title: 'Request Details' }}
-      />
-    </Stack.Navigator>
-  );
-}
-
-export function RestaurantTabs() {
-  const restaurantProfile = useAppStore((state) => state.restaurantProfile);
-  
-  // Show onboarding if not verified
-  if (!restaurantProfile?.verified) {
-    return <RestaurantOnboardingStack />;
-  }
-
+export const RestaurantTabs: React.FC = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = 'home';
-
-          if (route.name === 'Status') {
-            iconName = focused ? 'pulse' : 'pulse-outline';
-          } else if (route.name === 'Requests') {
-            iconName = focused ? 'mail' : 'mail-outline';
-          } else if (route.name === 'Holds') {
-            iconName = focused ? 'time' : 'time-outline';
-          } else if (route.name === 'Insights') {
-            iconName = focused ? 'analytics' : 'analytics-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
+      screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: colors.primary.main,
         tabBarInactiveTintColor: colors.text.muted,
-        headerShown: false,
-      })}
+        tabBarStyle: {
+          backgroundColor: colors.background.card,
+          borderTopColor: colors.border.elegant,
+        },
+      }}
     >
-      <Tab.Screen name="Status" component={RestaurantHomeStatusScreen} />
-      <Tab.Screen name="Requests" component={RequestsStack} />
-      <Tab.Screen name="Holds" component={HoldsScreen} />
-      <Tab.Screen name="Insights" component={InsightsScreen} />
-      <Tab.Screen name="Settings" component={RestaurantSettingsScreen} />
+      <Tab.Screen
+        name="Status"
+        component={RestaurantHomeStatusScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="pulse" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Table Map"
+        component={TableMapScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Requests"
+        component={RequestsStackNavigator}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="mail" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Holds"
+        component={HoldsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="time" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Insights"
+        component={InsightsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="stats-chart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={RestaurantSettingsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
-}
-
+};

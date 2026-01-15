@@ -65,3 +65,4 @@ export class ResyAdapter implements PlatformAdapter {
 }
 
 
+

@@ -1,194 +1,125 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppStore } from '../../store/useAppStore';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
-import { SectionHeader } from '../../components/SectionHeader';
+import { colors, typography, spacing } from '../../theme';
+import { useAppStore } from '../../store/useAppStore';
+import { authService } from '../../services/authService';
+import * as Haptics from 'expo-haptics';
 
-export function ProfileScreen() {
-  const preferences = useAppStore((state) => state.preferences);
-  const requests = useAppStore((state) => state.requests);
-  const setRole = useAppStore((state) => state.setRole);
+export const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const { user, setUser, setRole, role } = useAppStore();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await authService.logout();
+    setUser(null);
     setRole(null);
+    navigation.navigate('Welcome' as never);
+  };
+
+  const handleSwitchRole = () => {
+    if (user?.isAdmin) {
+      const newRole = role === 'diner' ? 'restaurant' : 'diner';
+      setRole(newRole);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <SectionHeader title="Profile" />
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Profile</Text>
 
-        <Card style={styles.card}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          {preferences ? (
-            <View style={styles.preferences}>
-              {preferences.dietary.length > 0 && (
-                <View style={styles.preferenceRow}>
-                  <Text style={styles.preferenceLabel}>Dietary:</Text>
-                  <Text style={styles.preferenceValue}>{preferences.dietary.join(', ')}</Text>
-                </View>
-              )}
-              {preferences.budget.length > 0 && (
-                <View style={styles.preferenceRow}>
-                  <Text style={styles.preferenceLabel}>Budget:</Text>
-                  <Text style={styles.preferenceValue}>
-                    {preferences.budget.map((b) => '$'.repeat(b)).join(', ')}
-                  </Text>
-                </View>
-              )}
-              {preferences.ambience.length > 0 && (
-                <View style={styles.preferenceRow}>
-                  <Text style={styles.preferenceLabel}>Ambience:</Text>
-                  <Text style={styles.preferenceValue}>{preferences.ambience.join(', ')}</Text>
-                </View>
-              )}
-            </View>
-          ) : (
-            <Text style={styles.emptyText}>No preferences set</Text>
+          <Card style={styles.card}>
+            <Text style={styles.label}>Name</Text>
+            <Text style={styles.value}>{user?.name || 'Not set'}</Text>
+          </Card>
+
+          <Card style={styles.card}>
+            <Text style={styles.label}>Email</Text>
+            <Text style={styles.value}>{user?.email || 'Not set'}</Text>
+          </Card>
+
+          {user?.isAdmin && (
+            <Card style={styles.card}>
+              <Text style={styles.label}>Admin Access</Text>
+              <Text style={styles.value}>Full Access Enabled</Text>
+              <Button
+                title={`Switch to ${role === 'diner' ? 'Restaurant' : 'Diner'} View`}
+                onPress={handleSwitchRole}
+                variant="primary"
+                size="md"
+                style={styles.switchButton}
+              />
+            </Card>
           )}
-        </Card>
 
-        <Card style={styles.card}>
-          <Text style={styles.sectionTitle}>History</Text>
-          {requests.length > 0 ? (
-            <View style={styles.history}>
-              {requests.slice(0, 5).map((request) => (
-                <View key={request.id} style={styles.historyItem}>
-                  <View style={styles.historyContent}>
-                    <Text style={styles.historyRestaurant}>{request.restaurantName}</Text>
-                    <Text style={styles.historyDetails}>
-                      {request.timeWindow} • Party of {request.partySize}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      request.status === 'confirmed' && styles.statusConfirmed,
-                      request.status === 'declined' && styles.statusDeclined,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        request.status === 'confirmed' && styles.statusTextConfirmed,
-                        request.status === 'declined' && styles.statusTextDeclined,
-                      ]}
-                    >
-                      {request.status}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Text style={styles.emptyText}>No reservation history</Text>
-          )}
-        </Card>
-
-        <Card style={styles.card}>
-          <Text style={styles.sectionTitle}>Payment</Text>
-          <Text style={styles.emptyText}>Payment methods (optional)</Text>
-          <Button title="Add Payment Method" onPress={() => {}} variant="outline" fullWidth />
-        </Card>
-
-        <Button title="Logout" onPress={handleLogout} variant="outline" fullWidth />
-      </ScrollView>
-    </SafeAreaView>
+          <Button
+            title="Logout"
+            onPress={handleLogout}
+            variant="secondary"
+            size="lg"
+            style={styles.button}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: '#F8F9FA',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
+  scrollContent: {
+    padding: spacing.lg,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.lg,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 16,
+  label: {
+    ...typography.bodySmall,
+    color: colors.text.muted,
+    marginBottom: spacing.xs,
   },
-  preferences: {
-    gap: 12,
+  value: {
+    ...typography.body,
+    color: colors.text.primary,
   },
-  preferenceRow: {
-    flexDirection: 'row',
+  switchButton: {
+    marginTop: spacing.md,
   },
-  preferenceLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#7F8C8D',
-    width: 80,
-  },
-  preferenceValue: {
-    fontSize: 14,
-    color: '#2C3E50',
-    flex: 1,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    fontStyle: 'italic',
-  },
-  history: {
-    gap: 12,
-  },
-  historyItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  historyContent: {
-    flex: 1,
-  },
-  historyRestaurant: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 4,
-  },
-  historyDetails: {
-    fontSize: 14,
-    color: '#7F8C8D',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: '#F0F0F0',
-  },
-  statusConfirmed: {
-    backgroundColor: '#E8F5E9',
-  },
-  statusDeclined: {
-    backgroundColor: '#FFEBEE',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2C3E50',
-    textTransform: 'capitalize',
-  },
-  statusTextConfirmed: {
-    color: '#4ECDC4',
-  },
-  statusTextDeclined: {
-    color: '#FF6B6B',
+  button: {
+    marginTop: spacing.lg,
   },
 });
-

@@ -1,84 +1,169 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../theme/colors';
+import { colors, typography, radius, spacing } from '../theme';
 
 interface AIChatBubbleProps {
   message: string;
-  isUser?: boolean;
-  timestamp?: string;
+  role: 'user' | 'assistant';
+  timestamp?: Date;
 }
 
-export function AIChatBubble({ message, isUser = false, timestamp }: AIChatBubbleProps) {
-  if (isUser) {
-    return (
-      <View style={styles.userContainer}>
-        <LinearGradient
-          colors={colors.gradients.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.userBubble}
-        >
-          <Text style={styles.userText}>{message}</Text>
-        </LinearGradient>
-        {timestamp && <Text style={styles.timestamp}>{timestamp}</Text>}
-      </View>
-    );
-  }
+export const AIChatBubble: React.FC<AIChatBubbleProps> = ({
+  message,
+  role,
+  timestamp,
+}) => {
+  const isUser = role === 'user';
 
   return (
-    <View style={styles.aiContainer}>
-      <View style={styles.aiBubble}>
-        <Text style={styles.aiText}>{message}</Text>
+    <View
+      style={[
+        styles.container,
+        isUser ? styles.userContainer : styles.assistantContainer,
+      ]}
+    >
+      {/* Avatar */}
+      <View style={styles.avatarContainer}>
+        {isUser ? (
+          <View style={styles.userAvatar}>
+            <Ionicons name="person" size={16} color={colors.text.primary} />
+          </View>
+        ) : (
+          <LinearGradient
+            colors={['#FF6B92', '#B66DFF']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.aiAvatar}
+          >
+            <Ionicons name="sparkles" size={16} color={colors.text.inverse} />
+          </LinearGradient>
+        )}
       </View>
-      {timestamp && <Text style={styles.timestamp}>{timestamp}</Text>}
+
+      {/* Bubble */}
+      <View
+        style={[
+          styles.bubble,
+          isUser ? styles.userBubble : styles.assistantBubble,
+        ]}
+      >
+        <Text
+          style={[
+            styles.text,
+            isUser ? styles.userText : styles.assistantText,
+          ]}
+        >
+          {message}
+        </Text>
+        {timestamp && (
+          <Text
+            style={[
+              styles.timestamp,
+              isUser ? styles.userTimestamp : styles.assistantTimestamp,
+            ]}
+          >
+            {timestamp.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </Text>
+        )}
+        {!isUser && (
+          <View style={styles.actionBar}>
+            <TouchableOpacity>
+              <Ionicons name="copy-outline" size={16} color={colors.text.muted} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons name="thumbs-up-outline" size={16} color={colors.text.muted} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons name="thumbs-down-outline" size={16} color={colors.text.muted} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons name="volume-high-outline" size={16} color={colors.text.muted} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons name="refresh-outline" size={16} color={colors.text.muted} />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  userContainer: {
+  container: {
+    flexDirection: 'row',
+    marginVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
     alignItems: 'flex-end',
-    marginBottom: 12,
-    paddingHorizontal: 16,
+  },
+  userContainer: {
+    justifyContent: 'flex-end',
+  },
+  assistantContainer: {
+    justifyContent: 'flex-start',
+  },
+  avatarContainer: {
+    marginRight: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  userAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.background.card,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bubble: {
+    maxWidth: '75%',
+    padding: spacing.md,
+    borderRadius: radius.xl,
   },
   userBubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
-    borderTopRightRadius: 4,
-    maxWidth: '80%',
+    backgroundColor: colors.background.card,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+  },
+  assistantBubble: {
+    backgroundColor: colors.background.chatAI,
+  },
+  text: {
+    ...typography.body,
   },
   userText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  aiContainer: {
-    alignItems: 'flex-start',
-    marginBottom: 12,
-    paddingHorizontal: 16,
-  },
-  aiBubble: {
-    backgroundColor: colors.background.card,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
-    borderTopLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.border.light,
-    maxWidth: '80%',
-  },
-  aiText: {
     color: colors.text.primary,
-    fontSize: 15,
-    lineHeight: 20,
+  },
+  assistantText: {
+    color: colors.text.primary,
   },
   timestamp: {
+    ...typography.caption,
+    marginTop: spacing.xs,
+  },
+  userTimestamp: {
     color: colors.text.muted,
-    fontSize: 11,
-    marginTop: 4,
-    paddingHorizontal: 16,
+  },
+  assistantTimestamp: {
+    color: colors.text.muted,
+  },
+  actionBar: {
+    flexDirection: 'row',
+    marginTop: spacing.sm,
+    gap: spacing.md,
+    alignItems: 'center',
   },
 });
-

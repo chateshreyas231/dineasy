@@ -1,43 +1,61 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { colors } from '../theme/colors';
+import { BlurView } from 'expo-blur';
+import { colors, radius, spacing } from '../theme';
+
+export type CardVariant = 'default' | 'elevated' | 'outlined' | 'glass';
 
 interface CardProps {
   children: React.ReactNode;
+  variant?: CardVariant;
   style?: ViewStyle;
-  padding?: number;
-  glow?: boolean;
 }
 
-export function Card({ children, style, padding = 16, glow = false }: CardProps) {
-  return (
-    <View style={[
-      styles.card,
-      glow && styles.glow,
-      { padding },
-      style,
-    ]}>
-      {children}
-    </View>
-  );
-}
+export const Card: React.FC<CardProps> = ({
+  children,
+  variant = 'default',
+  style,
+}) => {
+  const cardStyle = [
+    styles.card,
+    variant === 'elevated' && styles.cardElevated,
+    variant === 'outlined' && styles.cardOutlined,
+    variant === 'glass' && styles.cardGlass,
+    style,
+  ];
+
+  if (variant === 'glass') {
+    return (
+      <BlurView intensity={80} tint="light" style={cardStyle}>
+        {children}
+      </BlurView>
+    );
+  }
+
+  return <View style={cardStyle}>{children}</View>;
+};
+
+const cardBorderRadius = radius['2xl']; // Extract to constant for StyleSheet
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.background.card,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border.light,
-    shadowColor: colors.primary.main,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-    marginBottom: 12,
+    borderRadius: cardBorderRadius, // More rounded (32px)
+    padding: spacing.lg,
+    borderWidth: 0, // No border for cleaner look
   },
-  glow: {
-    borderColor: colors.primary.main,
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
+  cardElevated: {
+    borderColor: colors.border.elegant,
+  },
+  cardOutlined: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: colors.border.elegant,
+  },
+  cardGlass: {
+    backgroundColor: colors.background.glass,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    overflow: 'hidden',
   },
 });

@@ -1,155 +1,150 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { useAppStore } from '../../store/useAppStore';
 import { Button } from '../../components/Button';
 import { Chip } from '../../components/Chip';
 import { Card } from '../../components/Card';
-import { SectionHeader } from '../../components/SectionHeader';
+import { colors, typography, spacing } from '../../theme';
 
-const vibeOptions = ['Quiet', 'Romantic', 'Energetic', 'Cozy', 'Upscale', 'Casual', 'Live Music'];
-const cuisineOptions = ['Italian', 'Mexican', 'Japanese', 'American', 'French', 'Mediterranean', 'Asian', 'Indian'];
-const mustHaveOptions = ['Outdoor Seating', 'Bar', 'Parking', 'Wheelchair Accessible', 'WiFi', 'Pet Friendly'];
-
-export function IntentBuilderScreen() {
+export const IntentBuilderScreen: React.FC = () => {
   const navigation = useNavigation();
-  const currentIntent = useAppStore((state) => state.currentIntent);
-  const setCurrentIntent = useAppStore((state) => state.setCurrentIntent);
-  const [vibeTags, setVibeTags] = useState<string[]>(currentIntent?.vibeTags || []);
-  const [cuisineTags, setCuisineTags] = useState<string[]>(currentIntent?.cuisineTags || []);
-  const [mustHaves, setMustHaves] = useState<string[]>(currentIntent?.mustHaves || []);
-  const [dishesLike, setDishesLike] = useState(currentIntent?.dishesLike || '');
+  const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
+  const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
 
-  const toggleVibe = (tag: string) => {
-    setVibeTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+  const vibeTags = [
+    'Date Night',
+    'Quiet',
+    'Live Music',
+    'Outdoor Seating',
+    'Romantic',
+    'Family Friendly',
+    'Business',
+    'Casual',
+  ];
+
+  const cuisines = [
+    'Italian',
+    'French',
+    'Japanese',
+    'Mexican',
+    'American',
+    'Mediterranean',
+    'Asian',
+    'Steakhouse',
+  ];
+
+  const toggleVibe = (vibe: string) => {
+    setSelectedVibes((prev) =>
+      prev.includes(vibe) ? prev.filter((v) => v !== vibe) : [...prev, vibe]
+    );
   };
 
-  const toggleCuisine = (tag: string) => {
-    setCuisineTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+  const toggleCuisine = (cuisine: string) => {
+    setSelectedCuisines((prev) =>
+      prev.includes(cuisine)
+        ? prev.filter((c) => c !== cuisine)
+        : [...prev, cuisine]
+    );
   };
 
-  const toggleMustHave = (tag: string) => {
-    setMustHaves((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
-  };
-
-  const handleFindOptions = () => {
-    if (currentIntent) {
-      setCurrentIntent({
-        ...currentIntent,
-        vibeTags,
-        cuisineTags,
-        mustHaves,
-        dishesLike,
-      });
-    }
+  const handleSearch = () => {
     navigation.navigate('Results' as never);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <SectionHeader title="Build Your Intent" subtitle="Refine your search" />
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Refine Your Search</Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vibe</Text>
-          <View style={styles.chipContainer}>
-            {vibeOptions.map((option) => (
-              <Chip
-                key={option}
-                label={option}
-                selected={vibeTags.includes(option)}
-                onPress={() => toggleVibe(option)}
-              />
-            ))}
-          </View>
-        </View>
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>Vibe Tags</Text>
+            <View style={styles.chipsContainer}>
+              {vibeTags.map((vibe) => (
+                <Chip
+                  key={vibe}
+                  label={vibe}
+                  selected={selectedVibes.includes(vibe)}
+                  onPress={() => toggleVibe(vibe)}
+                />
+              ))}
+            </View>
+          </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Cuisine</Text>
-          <View style={styles.chipContainer}>
-            {cuisineOptions.map((option) => (
-              <Chip
-                key={option}
-                label={option}
-                selected={cuisineTags.includes(option)}
-                onPress={() => toggleCuisine(option)}
-              />
-            ))}
-          </View>
-        </View>
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>Cuisine</Text>
+            <View style={styles.chipsContainer}>
+              {cuisines.map((cuisine) => (
+                <Chip
+                  key={cuisine}
+                  label={cuisine}
+                  selected={selectedCuisines.includes(cuisine)}
+                  onPress={() => toggleCuisine(cuisine)}
+                />
+              ))}
+            </View>
+          </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Must-haves</Text>
-          <View style={styles.chipContainer}>
-            {mustHaveOptions.map((option) => (
-              <Chip
-                key={option}
-                label={option}
-                selected={mustHaves.includes(option)}
-                onPress={() => toggleMustHave(option)}
-              />
-            ))}
-          </View>
-        </View>
-
-        <Card style={styles.inputCard}>
-          <Text style={styles.inputLabel}>I want dishes like… (optional)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g., pasta carbonara, sushi rolls, tacos..."
-            value={dishesLike}
-            onChangeText={setDishesLike}
-            placeholderTextColor="#7F8C8D"
-            multiline
+          <Button
+            title="Search"
+            onPress={handleSearch}
+            variant="primary"
+            size="lg"
+            style={styles.searchButton}
           />
-        </Card>
-
-        <Button title="Find Options" onPress={handleFindOptions} variant="primary" fullWidth />
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: '#F8F9FA',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
+  scrollContent: {
+    padding: spacing.lg,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.xl,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 12,
+    ...typography.h3,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
-  chipContainer: {
+  chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: spacing.sm,
   },
-  inputCard: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
-  input: {
-    fontSize: 16,
-    color: '#2C3E50',
-    minHeight: 80,
-    textAlignVertical: 'top',
+  searchButton: {
+    marginTop: spacing.lg,
   },
 });
-

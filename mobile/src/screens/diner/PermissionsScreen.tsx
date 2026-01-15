@@ -1,92 +1,121 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { Button } from '../../components/Button';
+import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../components/Card';
+import { Button } from '../../components/Button';
+import { colors, typography, spacing } from '../../theme';
 
-export function PermissionsScreen() {
+export const PermissionsScreen: React.FC = () => {
   const navigation = useNavigation();
 
+  const handleContinue = () => {
+    navigation.navigate('Preferences' as never);
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Location Permission</Text>
-        <Text style={styles.subtitle}>Why we need it</Text>
-
-        <Card style={styles.card}>
-          <Text style={styles.description}>
-            We use your location to find restaurants near you and show accurate distances.
-            Your location is only used when you're actively searching for restaurants.
+    <LinearGradient
+      colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>Enable Permissions</Text>
+          <Text style={styles.subtitle}>
+            We need a few permissions to provide the best experience
           </Text>
-        </Card>
 
-        <View style={styles.benefits}>
-          <Text style={styles.benefitTitle}>Benefits:</Text>
-          <Text style={styles.benefit}>• Find restaurants within walking distance</Text>
-          <Text style={styles.benefit}>• Get accurate wait time estimates</Text>
-          <Text style={styles.benefit}>• Discover hidden gems in your neighborhood</Text>
-        </View>
+          <Card style={styles.card}>
+            <View style={styles.permission}>
+              <Ionicons name="location" size={32} color={colors.primary.main} />
+              <View style={styles.permissionContent}>
+                <Text style={styles.permissionTitle}>Location</Text>
+                <Text style={styles.permissionDescription}>
+                  Find restaurants near you
+                </Text>
+              </View>
+            </View>
+          </Card>
 
-        <Button
-          title="Allow Location Access"
-          onPress={() => {
-            // In real app, request permission here
-            // For now, just navigate forward
-            navigation.navigate('Preferences' as never);
-          }}
-          variant="primary"
-          fullWidth
-        />
-      </ScrollView>
-    </SafeAreaView>
+          <Card style={styles.card}>
+            <View style={styles.permission}>
+              <Ionicons name="notifications" size={32} color={colors.primary.main} />
+              <View style={styles.permissionContent}>
+                <Text style={styles.permissionTitle}>Notifications</Text>
+                <Text style={styles.permissionDescription}>
+                  Get updates on your reservations
+                </Text>
+              </View>
+            </View>
+          </Card>
+
+          <Button
+            title="Continue"
+            onPress={handleContinue}
+            variant="primary"
+            size="lg"
+            style={styles.button}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
-    padding: 24,
+  scrollContent: {
+    padding: spacing.lg,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 8,
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#7F8C8D',
-    marginBottom: 24,
+    ...typography.body,
+    color: colors.text.muted,
+    marginBottom: spacing.xl,
   },
   card: {
-    marginBottom: 24,
+    marginBottom: spacing.md,
   },
-  description: {
-    fontSize: 16,
-    color: '#2C3E50',
-    lineHeight: 24,
+  permission: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
-  benefits: {
-    marginBottom: 32,
+  permissionContent: {
+    flex: 1,
   },
-  benefitTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 12,
+  permissionTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
   },
-  benefit: {
-    fontSize: 16,
-    color: '#2C3E50',
-    marginBottom: 8,
-    lineHeight: 24,
+  permissionDescription: {
+    ...typography.bodySmall,
+    color: colors.text.muted,
+  },
+  button: {
+    marginTop: spacing.lg,
   },
 });
-
