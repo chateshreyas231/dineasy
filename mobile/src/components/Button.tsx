@@ -108,7 +108,7 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 // Extract radius value to constant to avoid StyleSheet issues
-const buttonRadius = radius.xl;
+const buttonRadius = radius.lg;
 
 const styles = StyleSheet.create({
   button: {
@@ -132,9 +132,9 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   button_lg: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    minHeight: 56,
+    paddingHorizontal: spacing.lg + 4,
+    paddingVertical: spacing.md + 2,
+    minHeight: 50,
   },
   buttonSecondary: {
     backgroundColor: colors.background.card,
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
   text_lg: {
-    fontSize: 19,
+    fontSize: 17,
   },
   textPrimary: {
     color: colors.text.inverse,

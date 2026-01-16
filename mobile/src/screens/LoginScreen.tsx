@@ -24,7 +24,7 @@ const ADMIN_PASSWORD = 'admin123';
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { setUser } = useAppStore();
+  const { setUser, role } = useAppStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -164,28 +164,32 @@ export const LoginScreen: React.FC = () => {
               style={styles.loginButton}
             />
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
+            {role !== 'restaurant' && (
+              <>
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>OR</Text>
+                  <View style={styles.dividerLine} />
+                </View>
 
-            <Button
-              title="Continue with Google"
-              onPress={handleGoogleSignIn}
-              variant="secondary"
-              size="lg"
-              style={styles.socialButton}
-            />
+                <Button
+                  title="Continue with Google"
+                  onPress={handleGoogleSignIn}
+                  variant="secondary"
+                  size="lg"
+                  style={styles.socialButton}
+                />
 
-            {Platform.OS === 'ios' && (
-              <Button
-                title="Continue with Apple"
-                onPress={handleAppleSignIn}
-                variant="secondary"
-                size="lg"
-                style={styles.socialButton}
-              />
+                {Platform.OS === 'ios' && (
+                  <Button
+                    title="Continue with Apple"
+                    onPress={handleAppleSignIn}
+                    variant="secondary"
+                    size="lg"
+                    style={styles.socialButton}
+                  />
+                )}
+              </>
             )}
 
             <View style={styles.adminSection}>

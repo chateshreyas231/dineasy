@@ -6,6 +6,7 @@ import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SignupScreen } from '../screens/SignupScreen';
 import { AIAssistantScreen } from '../screens/AIAssistantScreen';
+import { RestaurantOnboardingScreen } from '../screens/restaurant/RestaurantOnboardingScreen';
 import { DinerTabs } from './DinerTabs';
 import { RestaurantTabs } from './RestaurantTabs';
 import { useAppStore } from '../store/useAppStore';
@@ -61,7 +62,14 @@ export const RoleSwitcher: React.FC = () => {
             <Stack.Screen name="DinerApp" component={DinerTabs} />
           </>
         ) : (
-          <Stack.Screen name="RestaurantApp" component={RestaurantTabs} />
+          <>
+            <Stack.Screen 
+              name="RestaurantOnboarding" 
+              component={RestaurantOnboardingScreen}
+              options={{ gestureEnabled: false }}
+            />
+            <Stack.Screen name="RestaurantApp" component={RestaurantTabs} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

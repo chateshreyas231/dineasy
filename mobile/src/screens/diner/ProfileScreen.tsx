@@ -17,22 +17,13 @@ import * as Haptics from 'expo-haptics';
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { user, setUser, setRole, role } = useAppStore();
+  const { user, setUser } = useAppStore();
 
   const handleLogout = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await authService.logout();
     setUser(null);
-    setRole(null);
     navigation.navigate('Welcome' as never);
-  };
-
-  const handleSwitchRole = () => {
-    if (user?.isAdmin) {
-      const newRole = role === 'diner' ? 'restaurant' : 'diner';
-      setRole(newRole);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
   };
 
   return (
@@ -57,20 +48,6 @@ export const ProfileScreen: React.FC = () => {
             <Text style={styles.label}>Email</Text>
             <Text style={styles.value}>{user?.email || 'Not set'}</Text>
           </Card>
-
-          {user?.isAdmin && (
-            <Card style={styles.card}>
-              <Text style={styles.label}>Admin Access</Text>
-              <Text style={styles.value}>Full Access Enabled</Text>
-              <Button
-                title={`Switch to ${role === 'diner' ? 'Restaurant' : 'Diner'} View`}
-                onPress={handleSwitchRole}
-                variant="secondary"
-                size="md"
-                style={styles.switchButton}
-              />
-            </Card>
-          )}
 
           <Button
             title="Logout"
@@ -115,9 +92,6 @@ const styles = StyleSheet.create({
   value: {
     ...typography.body,
     color: colors.text.primary,
-  },
-  switchButton: {
-    marginTop: spacing.md,
   },
   button: {
     marginTop: spacing.lg,
