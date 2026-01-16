@@ -3,10 +3,10 @@
  * Handles all API calls to the backend
  */
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
+import axios, { AxiosInstance, AxiosError } from 'axios';
+import { supabase } from '../lib/supabase';
 
-// Mock auth flag - set to true for testing without backend
-const USE_MOCK_AUTH = true;
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export interface ApiResponse<T> {
   data?: T;
@@ -14,45 +14,43 @@ export interface ApiResponse<T> {
 }
 
 class ApiClient {
-  private baseUrl: string;
-  private token: string | null = null;
+  private axiosInstance: AxiosInstance;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+    this.axiosInstance = axios.create({
+      baseURL: baseUrl,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    this.axiosInstance.interceptors.request.use(async (config) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        config.headers.Authorization = `Bearer ${session.access_token}`;
+      }
+      return config;
+    });
   }
 
   setToken(token: string | null) {
-    this.token = token;
+    // Token is now handled by interceptor, but keeping for backward compatibility
   }
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: { method: string; data?: any }
   ): Promise<ApiResponse<T>> {
     try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      };
-
-      if (this.token) {
-        headers['Authorization'] = `Bearer ${this.token}`;
-      }
-
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
-        ...options,
-        headers,
+      const response = await this.axiosInstance.request<T>({
+        url: endpoint,
+        method: options.method as any,
+        data: options.data,
       });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-        return { error: error.message || 'Request failed' };
-      }
-
-      const data = await response.json();
-      return { data };
+      return { data: response.data };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : 'Network error' };
+      const axiosError = error as AxiosError;
+      return { error: (axiosError.response?.data as any)?.message || axiosError.message || 'Request failed' };
     }
   }
 
@@ -61,17 +59,11 @@ class ApiClient {
   }
 
   async post<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
+    return this.request<T>(endpoint, { method: 'POST', data: body });
   }
 
   async put<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(body),
-    });
+    return this.request<T>(endpoint, { method: 'PUT', data: body });
   }
 
   async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
@@ -84,25 +76,12 @@ export const apiClient = new ApiClient(API_BASE_URL);
 // Auth endpoints
 export const authApi = {
   login: async (email: string, password: string) => {
-    if (USE_MOCK_AUTH) {
-      // Fallback to mock auth
-      const { mockLogin } = await import('./mockAuth');
-      return mockLogin(email, password);
-    }
     return apiClient.post('/auth/login', { email, password });
   },
   register: async (email: string, password: string, name: string) => {
-    if (USE_MOCK_AUTH) {
-      const { mockRegister } = await import('./mockAuth');
-      return mockRegister(email, password, name);
-    }
     return apiClient.post('/auth/register', { email, password, name });
   },
   getMe: async () => {
-    if (USE_MOCK_AUTH) {
-      const { mockGetMe } = await import('./mockAuth');
-      return mockGetMe(apiClient['token'] || '');
-    }
     return apiClient.get('/auth/me');
   },
   updatePushToken: async (pushToken: string) => {
@@ -182,5 +161,109 @@ export const monitorApi = {
   },
   list: async () => {
     return apiClient.get('/monitor');
+  },
+};
+
+// Request endpoints (using Supabase directly)
+export const requestApi = {
+  createRequest: async (data: {
+    restaurant_id: string;
+    datetime: string;
+    party_size: number;
+    notes?: string;
+    [key: string]: any;
+  }): Promise<ApiResponse<any>> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: 'Not authenticated' };
+      
+      const { data: result, error } = await supabase
+        .from('booking_requests')
+        .insert({ ...data, diner_id: user.id })
+        .select()
+        .single();
+      
+      if (error) return { error: error.message };
+      return { data: result };
+    } catch (error: any) {
+      return { error: error.message || 'Request failed' };
+    }
+  },
+  getRequest: async (id: string): Promise<ApiResponse<any>> => {
+    try {
+      const { data, error } = await supabase
+        .from('booking_requests')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) return { error: error.message };
+      return { data };
+    } catch (error: any) {
+      return { error: error.message || 'Request failed' };
+    }
+  },
+  listMyRequests: async (): Promise<ApiResponse<any>> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: 'Not authenticated' };
+      
+      const { data, error } = await supabase
+        .from('booking_requests')
+        .select('*')
+        .eq('diner_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) return { error: error.message };
+      return { data };
+    } catch (error: any) {
+      return { error: error.message || 'Request failed' };
+    }
+  },
+  restaurantInbox: async (): Promise<ApiResponse<any>> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: 'Not authenticated' };
+      
+      const { data, error } = await supabase
+        .from('booking_requests')
+        .select('*, restaurants!inner(*)')
+        .eq('restaurants.owner_id', user.id);
+      
+      if (error) return { error: error.message };
+      return { data };
+    } catch (error: any) {
+      return { error: error.message || 'Request failed' };
+    }
+  },
+  accept: async (id: string): Promise<ApiResponse<any>> => {
+    try {
+      const { data, error } = await supabase
+        .from('booking_requests')
+        .update({ status: 'accepted' })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) return { error: error.message };
+      return { data };
+    } catch (error: any) {
+      return { error: error.message || 'Request failed' };
+    }
+  },
+  decline: async (id: string): Promise<ApiResponse<any>> => {
+    try {
+      const { data, error } = await supabase
+        .from('booking_requests')
+        .update({ status: 'declined' })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) return { error: error.message };
+      return { data };
+    } catch (error: any) {
+      return { error: error.message || 'Request failed' };
+    }
   },
 };

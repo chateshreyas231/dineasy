@@ -15,9 +15,9 @@ import { useNavigation } from '@react-navigation/native';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { colors, typography, spacing, radius } from '../theme';
-import { authService } from '../services/authService';
 import { useAppStore } from '../store/useAppStore';
 import * as Haptics from 'expo-haptics';
+import { supabase } from '../lib/supabase';
 
 const ADMIN_EMAIL = 'admin@dineasy.com';
 const ADMIN_PASSWORD = 'admin123';
@@ -40,15 +40,47 @@ export const LoginScreen: React.FC = () => {
     setError('');
 
     try {
-      const result = await authService.loginWithEmail(email, password);
-      
-      if (result.success && result.user) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // Navigation will be handled by RoleSwitcher based on user state
-      } else {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setError(result.error || 'Login failed');
+        setError(authError.message);
+        return;
       }
+
+      if (!authData.user) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setError('Invalid response from server');
+        return;
+      }
+
+      // Fetch or create profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        // PGRST116 is "not found" which is okay for new users
+        console.error('Profile fetch error:', profileError);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setError(profileError.message || 'Failed to fetch profile');
+        return;
+      }
+
+      // Set user in store (triggers navigation via RoleSwitcher)
+      setUser({
+        id: authData.user.id,
+        email: authData.user.email!,
+        name: profile?.full_name || authData.user.email?.split('@')[0] || 'User',
+        role: (profile?.role as 'diner' | 'restaurant') || 'diner',
+        isAdmin: profile?.role === 'admin',
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -62,12 +94,8 @@ export const LoginScreen: React.FC = () => {
     setError('');
     
     try {
-      const result = await authService.signInWithGoogle();
-      if (result.success && result.user) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        setError(result.error || 'Google sign in not configured');
-      }
+      // Google sign in requires OAuth setup - keeping placeholder for now
+      setError('Google sign in not configured');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign in failed');
     } finally {
@@ -80,12 +108,8 @@ export const LoginScreen: React.FC = () => {
     setError('');
     
     try {
-      const result = await authService.signInWithApple();
-      if (result.success && result.user) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        setError(result.error || 'Apple sign in not configured');
-      }
+      // Apple sign in requires Apple Developer setup - keeping placeholder for now
+      setError('Apple sign in not configured');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Apple sign in failed');
     } finally {
@@ -98,16 +122,48 @@ export const LoginScreen: React.FC = () => {
     setError('');
     
     try {
-      const result = await authService.loginWithEmail(ADMIN_EMAIL, ADMIN_PASSWORD);
-      
-      if (result.success && result.user) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // Set admin role to diner by default (can switch)
-        useAppStore.getState().setRole('diner');
-      } else {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+      });
+
+      if (authError) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setError(result.error || 'Admin login failed');
+        setError(authError.message);
+        return;
       }
+
+      if (!authData.user) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setError('Invalid response from server');
+        return;
+      }
+
+      // Fetch or create profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Profile fetch error:', profileError);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setError(profileError.message || 'Failed to fetch profile');
+        return;
+      }
+
+      // Set user in store (triggers navigation via RoleSwitcher)
+      setUser({
+        id: authData.user.id,
+        email: authData.user.email!,
+        name: profile?.full_name || 'Admin',
+        role: 'diner', // Set admin role to diner by default (can switch)
+        isAdmin: true,
+      });
+      // Set admin role to diner by default (can switch)
+      useAppStore.getState().setRole('diner');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(err instanceof Error ? err.message : 'Admin login failed');
@@ -192,23 +248,6 @@ export const LoginScreen: React.FC = () => {
               </>
             )}
 
-            <View style={styles.adminSection}>
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>ADMIN ACCESS</Text>
-                <View style={styles.dividerLine} />
-              </View>
-              <Button
-                title="Login as Admin"
-                onPress={handleAdminLogin}
-                variant="secondary"
-                size="md"
-                style={styles.adminButton}
-              />
-              <Text style={styles.adminHint}>
-                Email: admin@dineasy.com{'\n'}Password: admin123
-              </Text>
-            </View>
 
             <TouchableOpacity
               onPress={() => navigation.navigate('Signup' as never)}

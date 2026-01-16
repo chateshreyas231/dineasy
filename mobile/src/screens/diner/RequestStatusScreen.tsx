@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,14 +15,93 @@ import { colors, typography, spacing } from '../../theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { TableRequest } from '../../types';
+import { getRequest, Request } from '../../data/requests';
 import * as Haptics from 'expo-haptics';
 
 export const RequestStatusScreen: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { updateRequest } = useAppStore();
-  const request = (route.params as any)?.request as TableRequest;
+  const initialRequest = (route.params as any)?.request as TableRequest;
+  const [request, setRequest] = useState<TableRequest | null>(initialRequest);
+  const [isPolling, setIsPolling] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const status = request?.status || 'pending';
+
+  // Convert API Request to TableRequest format
+  const convertRequestToTableRequest = (apiRequest: Request, existingRequest?: TableRequest): TableRequest => {
+    return {
+      id: apiRequest.id,
+      restaurantId: apiRequest.restaurant_id,
+      restaurantName: existingRequest?.restaurantName || 'Restaurant',
+      dateTime: new Date(apiRequest.datetime),
+      partySize: apiRequest.party_size,
+      status: apiRequest.status as 'pending' | 'confirmed' | 'declined' | 'cancelled',
+      notes: apiRequest.notes || undefined,
+    };
+  };
+
+  // Poll for request status updates
+  useEffect(() => {
+    if (!request || !request.id) {
+      return;
+    }
+
+    // Only poll if status is pending
+    if (status !== 'pending') {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      setIsPolling(false);
+      return;
+    }
+
+    setIsPolling(true);
+
+    const pollRequestStatus = async () => {
+      setIsLoading(true);
+      try {
+        const updatedRequest = await getRequest(request.id);
+        if (updatedRequest) {
+          const tableRequest = convertRequestToTableRequest(updatedRequest, request);
+          setRequest(tableRequest);
+          updateRequest(request.id, { status: tableRequest.status });
+
+          // Stop polling if status changed to confirmed or declined
+          if (tableRequest.status === 'confirmed' || tableRequest.status === 'declined') {
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            setIsPolling(false);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+        }
+      } catch (error) {
+        console.error('Error polling request status:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Clear any existing interval
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    // Poll immediately, then every 5 seconds
+    pollRequestStatus();
+    pollingIntervalRef.current = setInterval(pollRequestStatus, 5000);
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [request?.id, status]);
 
   if (!request) {
     return null;
@@ -91,6 +171,14 @@ export const RequestStatusScreen: React.FC = () => {
             <Text style={styles.statusMessage}>
               {getStatusMessage()}
             </Text>
+            {isPolling && (
+              <View style={styles.pollingIndicator}>
+                <ActivityIndicator size="small" color={colors.primary.main} />
+                <Text style={styles.pollingText}>
+                  {isLoading ? 'Checking status...' : 'Checking for updates...'}
+                </Text>
+              </View>
+            )}
           </View>
 
           <Card style={styles.card}>
@@ -161,6 +249,17 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.text.muted,
     textAlign: 'center',
+  },
+  pollingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  pollingText: {
+    ...typography.bodySmall,
+    color: colors.text.muted,
+    fontStyle: 'italic',
   },
   card: {
     width: '100%',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,23 +12,41 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { colors, typography, spacing } from '../../theme';
-import { Restaurant, TableRequest } from '../../types';
-import { useAppStore } from '../../store/useAppStore';
+import { supabase } from '../../lib/supabase';
+import { createRequest } from '../../data/requests';
 import * as Haptics from 'expo-haptics';
 
 export const RequestTableScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { addRequest, user } = useAppStore();
-  const restaurant = (route.params as any)?.restaurant as Restaurant;
+  const restaurant_id = (route.params as any)?.restaurant_id as string;
+  const [restaurantName, setRestaurantName] = useState<string>('');
 
   const [partySize, setPartySize] = useState(2);
   const [dateTime, setDateTime] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (restaurant_id) {
+      // Fetch restaurant name from Supabase
+      supabase
+        .from('restaurants')
+        .select('name')
+        .eq('id', restaurant_id)
+        .single()
+        .then(({ data, error }) => {
+          if (data) {
+            setRestaurantName(data.name);
+          } else if (error) {
+            console.error('Error fetching restaurant:', error);
+          }
+        });
+    }
+  }, [restaurant_id]);
+
   const handleSubmit = async () => {
-    if (!dateTime || !restaurant) {
+    if (!dateTime || !restaurant_id) {
       return;
     }
 
@@ -36,22 +54,25 @@ export const RequestTableScreen: React.FC = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
+      // Convert dateTime to ISO string format
+      const datetime = new Date(dateTime).toISOString();
+      
       // Create table request
-      const request: TableRequest = {
-        id: Date.now().toString(),
-        restaurantId: restaurant.id,
-        restaurantName: restaurant.name,
-        dateTime: new Date(dateTime),
-        partySize,
-        status: 'pending',
-        notes: notes || undefined,
-      };
+      const request = await createRequest({
+        restaurant_id,
+        datetime,
+        party_size: partySize,
+        notes: notes || null,
+      });
 
-      addRequest(request);
+      if (!request) {
+        throw new Error('Failed to create request');
+      }
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
-      // Navigate to status screen
-      navigation.navigate('RequestStatus' as never, { request } as never);
+      // Navigate to status screen with requestId
+      navigation.navigate('RequestStatus' as never, { requestId: request.id } as never);
     } catch (error) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       console.error('Error submitting request:', error);
@@ -60,7 +81,7 @@ export const RequestTableScreen: React.FC = () => {
     }
   };
 
-  if (!restaurant) {
+  if (!restaurant_id) {
     return null;
   }
 
@@ -76,7 +97,9 @@ export const RequestTableScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
         >
           <Text style={styles.title}>Request Table</Text>
-          <Text style={styles.restaurantName}>{restaurant.name}</Text>
+          {restaurantName ? (
+            <Text style={styles.restaurantName}>{restaurantName}</Text>
+          ) : null}
 
           <Card style={styles.card}>
             <Input

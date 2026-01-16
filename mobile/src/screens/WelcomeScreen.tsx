@@ -45,9 +45,6 @@ export const WelcomeScreen: React.FC = () => {
             </View>
 
             <Text style={styles.title}>Dineasy</Text>
-            <Text style={styles.tagline}>
-              Discover extraordinary dining experiences
-            </Text>
             <Text style={styles.subtitle}>
               Curated • Personalized • Effortless
             </Text>

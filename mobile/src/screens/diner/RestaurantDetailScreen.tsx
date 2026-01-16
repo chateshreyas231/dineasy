@@ -43,7 +43,7 @@ export const RestaurantDetailScreen: React.FC = () => {
   const handleBookNow = async () => {
     if (!restaurant.bookingLink) {
       // Request table through app
-      navigation.navigate('RequestTable' as never, { restaurant } as never);
+      navigation.navigate('RequestTable' as never, { restaurant_id: restaurant.id } as never);
       return;
     }
 

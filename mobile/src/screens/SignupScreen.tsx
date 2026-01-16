@@ -16,9 +16,9 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Card } from '../components/Card';
 import { colors, typography, spacing, radius } from '../theme';
-import { authService } from '../services/authService';
 import { useAppStore } from '../store/useAppStore';
 import * as Haptics from 'expo-haptics';
+import { supabase } from '../lib/supabase';
 // import * as DocumentPicker from 'expo-document-picker'; // Install: npx expo install expo-document-picker
 
 export const SignupScreen: React.FC = () => {
@@ -83,37 +83,90 @@ export const SignupScreen: React.FC = () => {
     setError('');
 
     try {
-      const result = await authService.registerWithEmail(email, password, name);
-      
-      if (result.success && result.user) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        
-        // TODO: Save restaurant profile data to backend
-        // This would be done after successful registration
-        if (isRestaurant) {
-          // Store restaurant data in store or send to backend
-          console.log('Restaurant data:', {
-            restaurantName,
-            address,
-            city,
-            state,
-            zipCode,
-            phone,
-            managerName,
-            cuisine,
-            capacity,
-            numberOfTables,
-            employees,
-            menuFile,
-          });
-        }
-        
-        // Navigation will be handled by RoleSwitcher
-        // For restaurants, it will show RestaurantOnboarding screen
-      } else {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (authError) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setError(result.error || 'Registration failed');
+        setError(authError.message);
+        setLoading(false);
+        return;
       }
+
+      if (!authData.user) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setError('Invalid response from server');
+        setLoading(false);
+        return;
+      }
+
+      // Check if email confirmation is required
+      if (!authData.session) {
+        // Email confirmation required - profile will be created after email confirmation
+        // You can either show a message or create profile via a database trigger
+        Alert.alert(
+          'Check your email',
+          'Please confirm your email address to complete registration. Your profile will be created after confirmation.',
+          [{ text: 'OK' }]
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Insert profile after successful signup (use insert since it's a new user)
+      const userRole = isRestaurant ? 'restaurant' : 'diner';
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          role: userRole,
+          full_name: name,
+          phone: isRestaurant ? phone : null,
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        console.error('Error details:', JSON.stringify(profileError, null, 2));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setError(`Failed to create profile: ${profileError.message || profileError.code || 'Unknown error'}`);
+        setLoading(false);
+        return;
+      }
+
+      console.log('Profile created successfully:', profileData);
+
+      // Insert restaurant record if restaurant role
+      if (isRestaurant) {
+        const { error: restaurantError } = await supabase
+          .from('restaurants')
+          .insert({
+            owner_id: authData.user.id,
+            name: restaurantName,
+            phone: phone,
+            address: address,
+            city: city,
+          });
+
+        if (restaurantError) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          setError('Failed to create restaurant');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Set user in store (triggers navigation via RoleSwitcher)
+      setUser({
+        id: authData.user.id,
+        email: authData.user.email!,
+        name,
+        role: userRole,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -127,12 +180,8 @@ export const SignupScreen: React.FC = () => {
     setError('');
     
     try {
-      const result = await authService.signInWithGoogle();
-      if (result.success && result.user) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        setError(result.error || 'Google sign in not configured');
-      }
+      // Google sign in requires OAuth setup - keeping placeholder for now
+      setError('Google sign in not configured');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign in failed');
     } finally {
@@ -145,12 +194,8 @@ export const SignupScreen: React.FC = () => {
     setError('');
     
     try {
-      const result = await authService.signInWithApple();
-      if (result.success && result.user) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        setError(result.error || 'Apple sign in not configured');
-      }
+      // Apple sign in requires Apple Developer setup - keeping placeholder for now
+      setError('Apple sign in not configured');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Apple sign in failed');
     } finally {

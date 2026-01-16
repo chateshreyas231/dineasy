@@ -12,7 +12,7 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { colors, typography, spacing } from '../../theme';
 import { useAppStore } from '../../store/useAppStore';
-import { authService } from '../../services/authService';
+import { supabase } from '../../lib/supabase';
 import * as Haptics from 'expo-haptics';
 
 export const ProfileScreen: React.FC = () => {
@@ -21,7 +21,7 @@ export const ProfileScreen: React.FC = () => {
 
   const handleLogout = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await authService.logout();
+    await supabase.auth.signOut();
     setUser(null);
     navigation.navigate('Welcome' as never);
   };

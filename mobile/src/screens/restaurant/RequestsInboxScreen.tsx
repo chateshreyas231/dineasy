@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,35 +14,83 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
 import { colors, typography, spacing, radius } from '../../theme';
-import { useAppStore } from '../../store/useAppStore';
+import { listRestaurantPendingRequests, setRequestStatus, Request } from '../../data/requests';
 import { TableRequest } from '../../types';
 import * as Haptics from 'expo-haptics';
 
 // Extract radius values to constants for StyleSheet
 const badgeRadius = radius.sm;
 
+// Map API Request to UI TableRequest
+const mapRequestToTableRequest = (request: Request & { restaurants?: { name: string } }): TableRequest => ({
+  id: request.id,
+  restaurantId: request.restaurant_id,
+  restaurantName: request.restaurants?.name || 'Unknown Restaurant',
+  dateTime: new Date(request.datetime),
+  partySize: request.party_size,
+  status: request.status.toLowerCase() as 'pending' | 'confirmed' | 'declined' | 'cancelled',
+  notes: request.notes || undefined,
+});
+
 export const RequestsInboxScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { requests, updateRequest } = useAppStore();
-  
-  // Filter to show only pending requests
-  const pendingRequests = requests.filter((r) => r.status === 'pending');
+  const [requests, setRequests] = useState<TableRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleAccept = (requestId: string) => {
-    updateRequest(requestId, { status: 'confirmed' });
+  const loadRequests = useCallback(async () => {
+    try {
+      const data = await listRestaurantPendingRequests();
+      const mappedRequests = data.map(mapRequestToTableRequest);
+      setRequests(mappedRequests);
+    } catch (error) {
+      console.error('Error loading requests:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadRequests();
+  }, [loadRequests]);
+
+  const handleAccept = async (requestId: string) => {
+    // Optimistic update
+    setRequests((prev) =>
+      prev.filter((r) => r.id !== requestId)
+    );
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    // API call
+    await setRequestStatus(requestId, 'ACCEPTED');
+    // Reload to ensure sync
+    loadRequests();
   };
 
-  const handleDecline = (requestId: string) => {
-    updateRequest(requestId, { status: 'declined' });
+  const handleDecline = async (requestId: string) => {
+    // Optimistic update
+    setRequests((prev) =>
+      prev.filter((r) => r.id !== requestId)
+    );
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    // API call
+    await setRequestStatus(requestId, 'DECLINED');
+    // Reload to ensure sync
+    loadRequests();
   };
 
   const handleViewDetail = (request: TableRequest) => {
     navigation.navigate('RequestDetail' as never, { request } as never);
   };
 
-  if (pendingRequests.length === 0) {
+  if (!loading && requests.length === 0) {
     return (
       <View style={styles.container}>
         <LinearGradient
@@ -68,13 +117,16 @@ export const RequestsInboxScreen: React.FC = () => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <Text style={styles.title}>Requests</Text>
-          <Text style={styles.subtitle}>{pendingRequests.length} pending request{pendingRequests.length !== 1 ? 's' : ''}</Text>
+          <Text style={styles.subtitle}>{requests.length} pending request{requests.length !== 1 ? 's' : ''}</Text>
         </View>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
-          {pendingRequests.map((request) => (
+          {requests.map((request) => (
             <TouchableOpacity
               key={request.id}
               onPress={() => handleViewDetail(request)}

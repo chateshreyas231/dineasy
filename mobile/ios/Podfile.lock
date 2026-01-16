@@ -1,10 +1,15 @@
 PODS:
-  - EXApplication (6.0.2):
+  - EXApplication (7.0.8):
     - ExpoModulesCore
-  - EXAV (15.0.2):
+  - EXAV (16.0.8):
     - ExpoModulesCore
     - ReactCommon/turbomodule/core
   - EXConstants (18.0.13):
+    - ExpoModulesCore
+  - EXImageLoader (6.0.0):
+    - ExpoModulesCore
+    - React-Core
+  - EXNotifications (0.32.16):
     - ExpoModulesCore
   - Expo (54.0.31):
     - ExpoModulesCore
@@ -35,7 +40,11 @@ PODS:
     - ExpoModulesCore
   - ExpoBlur (15.0.8):
     - ExpoModulesCore
-  - ExpoCrypto (14.0.2):
+  - ExpoCrypto (15.0.8):
+    - ExpoModulesCore
+  - ExpoDevice (8.0.10):
+    - ExpoModulesCore
+  - ExpoDocumentPicker (14.0.8):
     - ExpoModulesCore
   - ExpoFileSystem (19.0.21):
     - ExpoModulesCore
@@ -46,11 +55,13 @@ PODS:
     - ReactCommon/turbomodule/core
   - ExpoHaptics (15.0.8):
     - ExpoModulesCore
+  - ExpoImagePicker (17.0.10):
+    - ExpoModulesCore
   - ExpoKeepAwake (15.0.8):
     - ExpoModulesCore
   - ExpoLinearGradient (15.0.8):
     - ExpoModulesCore
-  - ExpoLinking (7.0.5):
+  - ExpoLinking (8.0.11):
     - ExpoModulesCore
   - ExpoLocation (19.0.8):
     - ExpoModulesCore
@@ -1880,14 +1891,19 @@ DEPENDENCIES:
   - EXApplication (from `../node_modules/expo-application/ios`)
   - EXAV (from `../node_modules/expo-av/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
+  - EXImageLoader (from `../node_modules/expo-image-loader/ios`)
+  - EXNotifications (from `../node_modules/expo-notifications/ios`)
   - Expo (from `../node_modules/expo`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
   - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
+  - ExpoDevice (from `../node_modules/expo-device/ios`)
+  - ExpoDocumentPicker (from `../node_modules/expo-document-picker/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoGL (from `../node_modules/expo-gl`)
   - ExpoHaptics (from `../node_modules/expo-haptics/ios`)
+  - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinearGradient (from `../node_modules/expo-linear-gradient/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
@@ -1975,6 +1991,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-av/ios"
   EXConstants:
     :path: "../node_modules/expo-constants/ios"
+  EXImageLoader:
+    :path: "../node_modules/expo-image-loader/ios"
+  EXNotifications:
+    :path: "../node_modules/expo-notifications/ios"
   Expo:
     :path: "../node_modules/expo"
   ExpoAsset:
@@ -1983,6 +2003,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-blur/ios"
   ExpoCrypto:
     :path: "../node_modules/expo-crypto/ios"
+  ExpoDevice:
+    :path: "../node_modules/expo-device/ios"
+  ExpoDocumentPicker:
+    :path: "../node_modules/expo-document-picker/ios"
   ExpoFileSystem:
     :path: "../node_modules/expo-file-system/ios"
   ExpoFont:
@@ -1991,6 +2015,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-gl"
   ExpoHaptics:
     :path: "../node_modules/expo-haptics/ios"
+  ExpoImagePicker:
+    :path: "../node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoLinearGradient:
@@ -2150,20 +2176,25 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  EXApplication: 4c72f6017a14a65e338c5e74fca418f35141e819
-  EXAV: 4c41f0a6ae54a0b96597abc90e37962ab2ee0d85
+  EXApplication: 1e98d4b1dccdf30627f92917f4b2c5a53c330e5f
+  EXAV: b60fcf142fae6684d295bc28cd7cfcb3335570ea
   EXConstants: fce59a631a06c4151602843667f7cfe35f81e271
+  EXImageLoader: 189e3476581efe3ad4d1d3fb4735b7179eb26f05
+  EXNotifications: 9eec98712cc814ceff916d876cb53859003b0597
   Expo: 04993fbd7b06dc98ffac58da8847298470dc3db1
   ExpoAsset: f867e55ceb428aab99e1e8c082b5aee7c159ea18
   ExpoBlur: b90747a3f22a8b6ceffd9cb0dc41a4184efdc656
-  ExpoCrypto: e97e864c8d7b9ce4a000bca45dddb93544a1b2b4
+  ExpoCrypto: b6105ebaa15d6b38a811e71e43b52cd934945322
+  ExpoDevice: 6327c3c200816795708885adf540d26ecab83d1a
+  ExpoDocumentPicker: 7cd9e71a0f66fb19eb0a586d6f26eee1284692e0
   ExpoFileSystem: 858a44267a3e6e9057e0888ad7c7cfbf55d52063
   ExpoFont: 35ac6191ed86bbf56b3ebd2d9154eda9fad5b509
   ExpoGL: e671bbf4b276cce5512597a076af39e3f965bdc2
   ExpoHaptics: d3a6375d8dcc3a1083d003bc2298ff654fafb536
+  ExpoImagePicker: 1af3e4e31512d2f34c95c2a3018a3edc40aee748
   ExpoKeepAwake: 55f75eca6499bb9e4231ebad6f3e9cb8f99c0296
   ExpoLinearGradient: 809102bdb979f590083af49f7fa4805cd931bd58
-  ExpoLinking: 8d12bee174ba0cdf31239706578e29e74a417402
+  ExpoLinking: 8f0aaf69aa56f832913030503b6263dc6f647f37
   ExpoLocation: d5b61cb4970fa982e39ca94246a206a0c3b812ca
   ExpoModulesCore: f3da4f1ab5a8375d0beafab763739dbee8446583
   ExpoSecureStore: d32f751874a2ceb5aaeebeb3578e165c1ba2b24a
