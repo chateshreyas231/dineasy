@@ -295,7 +295,7 @@ class AIAgentService {
         restaurantId: r.placeId,
         placeId: r.placeId,
         name: r.name,
-        platform: 'deeplink', // Default
+        platform: r.platforms?.[0] || r.platform || 'deeplink', // Use first platform or fallback
         dateTime: (typeof this.slots.dateTime === 'string' ? this.slots.dateTime : this.slots.dateTime?.toISOString()) || new Date().toISOString(),
         partySize: this.slots.partySize || 2,
         cuisine: r.types?.[0] || this.slots.cuisine || 'restaurant',

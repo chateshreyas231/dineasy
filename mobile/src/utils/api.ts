@@ -25,10 +25,51 @@ class ApiClient {
     });
 
     this.axiosInstance.interceptors.request.use(async (config) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        config.headers.Authorization = `Bearer ${session.access_token}`;
+      if (!supabase) {
+        return config;
       }
+      
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        // Handle invalid refresh token errors gracefully
+        if (error) {
+          const isInvalidTokenError = 
+            error.message?.includes('Invalid Refresh Token') ||
+            error.message?.includes('Refresh Token Not Found') ||
+            error.message?.includes('JWT');
+          
+          if (isInvalidTokenError) {
+            // Clear invalid session silently
+            try {
+              await supabase.auth.signOut();
+            } catch (signOutError) {
+              // Ignore sign out errors
+            }
+          }
+          // Continue without auth token - request may fail but won't crash
+          return config;
+        }
+        
+        if (session?.access_token) {
+          config.headers.Authorization = `Bearer ${session.access_token}`;
+        }
+      } catch (error: any) {
+        // Handle unexpected errors - continue without auth token
+        const isInvalidTokenError = 
+          error?.message?.includes('Invalid Refresh Token') ||
+          error?.message?.includes('Refresh Token Not Found') ||
+          error?.message?.includes('JWT');
+        
+        if (isInvalidTokenError && supabase) {
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            // Ignore sign out errors
+          }
+        }
+      }
+      
       return config;
     });
   }
@@ -104,6 +145,9 @@ export const restaurantApi = {
   },
   getDetails: async (placeId: string) => {
     return apiClient.get(`/restaurants/${placeId}`);
+  },
+  sync: async (placeId: string, ownerUserId?: string) => {
+    return apiClient.post('/restaurants/sync', { placeId, ownerUserId });
   },
 };
 

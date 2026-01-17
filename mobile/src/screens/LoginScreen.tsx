@@ -196,21 +196,25 @@ export const LoginScreen: React.FC = () => {
           ) : null}
 
           <View style={styles.form}>
-            <Input
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              leftIcon="mail-outline"
-            />
-            <Input
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              leftIcon="lock-closed-outline"
-            />
+            <View style={styles.inputContainer}>
+              <Input
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                leftIcon="mail-outline"
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Input
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                leftIcon="lock-closed-outline"
+              />
+            </View>
 
             <Button
               title="Sign In"
@@ -295,6 +299,13 @@ const styles = StyleSheet.create({
   },
   form: {
     width: '100%',
+    alignItems: 'center',
+  },
+  inputContainer: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+    
   },
   errorContainer: {
     backgroundColor: colors.status.error + '20',
@@ -310,11 +321,17 @@ const styles = StyleSheet.create({
   loginButton: {
     marginTop: spacing.md,
     marginBottom: spacing.md,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 400,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   dividerLine: {
     flex: 1,
@@ -328,6 +345,9 @@ const styles = StyleSheet.create({
   },
   socialButton: {
     marginBottom: spacing.md,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 400,
   },
   signupLink: {
     marginTop: spacing.lg,

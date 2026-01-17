@@ -5,7 +5,9 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./DINEASY.png",
     "splash": {
+      "image": "./DINEASY.png",
       "resizeMode": "contain",
       "backgroundColor": "#FAF8F5"
     },
@@ -14,7 +16,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dineasy.app"
+      "bundleIdentifier": "com.dineasy.app",
+      "icon": "./DINEASY.png"
     },
     "android": {
       "adaptiveIcon": {

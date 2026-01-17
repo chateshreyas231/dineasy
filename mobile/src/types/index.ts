@@ -41,7 +41,10 @@ export interface Restaurant {
   highlights?: string[];
   bestTimes?: string[];
   bookingLink?: string;
-  platform?: string;
+  platform?: string; // Keep for backward compatibility
+  platforms?: string[]; // Array of platforms: ['opentable', 'resy', 'tock', etc.]
+  platformDetails?: Record<string, any>; // Platform-specific details
+  placeId?: string; // Google Places ID
 }
 
 export interface TableRequest {

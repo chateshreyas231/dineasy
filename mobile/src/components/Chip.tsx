@@ -32,9 +32,9 @@ export const Chip: React.FC<ChipProps> = ({
         style={[styles.chip, styles.chipSelected, style]}
       >
         <LinearGradient
-          colors={['#FF6B92', '#B66DFF']}
+          colors={['#000000', '#1A1A1A']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 1, y: 0 }}
           style={styles.gradient}
         >
           <Text style={styles.textSelected}>{label}</Text>

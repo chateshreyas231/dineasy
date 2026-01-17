@@ -2,11 +2,10 @@ import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useSessionStore } from './src/store/useSessionStore';
 import { AuthNavigator } from './src/navigation/AuthNavigator';
 import { RootNavigator } from './src/navigation/RootNavigator';
-import { colors } from './src/theme';
+import { AppSplashScreen } from './src/components/AppSplashScreen';
 
 export default function App() {
   const { session, loading, init } = useSessionStore();
@@ -18,9 +17,7 @@ export default function App() {
   if (loading) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary.main} />
-        </View>
+        <AppSplashScreen />
       </GestureHandlerRootView>
     );
   }
@@ -35,11 +32,3 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background.primary,
-  },
-});

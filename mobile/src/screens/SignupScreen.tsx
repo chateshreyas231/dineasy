@@ -243,34 +243,42 @@ export const SignupScreen: React.FC = () => {
                 {isRestaurant ? 'Account Information' : 'Account Details'}
               </Text>
               
-              <Input
-                placeholder={isRestaurant ? 'Manager Name' : 'Full Name'}
-                value={name}
-                onChangeText={setName}
-                leftIcon="person-outline"
-              />
-              <Input
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                leftIcon="mail-outline"
-              />
-              <Input
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                leftIcon="lock-closed-outline"
-              />
-              <Input
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                leftIcon="lock-closed-outline"
-              />
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder={isRestaurant ? 'Manager Name' : 'Full Name'}
+                  value={name}
+                  onChangeText={setName}
+                  leftIcon="person-outline"
+                />
+              </View>
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  leftIcon="mail-outline"
+                />
+              </View>
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  leftIcon="lock-closed-outline"
+                />
+              </View>
+              <View style={styles.inputWrapper}>
+                <Input
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                  leftIcon="lock-closed-outline"
+                />
+              </View>
             </Card>
 
             {/* Restaurant-Specific Fields - Minimal info only */}
@@ -281,19 +289,23 @@ export const SignupScreen: React.FC = () => {
                   We'll collect additional details in the next step
                 </Text>
                 
-                <Input
-                  placeholder="Restaurant Name *"
-                  value={restaurantName}
-                  onChangeText={setRestaurantName}
-                  leftIcon="restaurant-outline"
-                />
-                <Input
-                  placeholder="Phone Number *"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  leftIcon="call-outline"
-                />
+                <View style={styles.inputWrapper}>
+                  <Input
+                    placeholder="Restaurant Name *"
+                    value={restaurantName}
+                    onChangeText={setRestaurantName}
+                    leftIcon="restaurant-outline"
+                  />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <Input
+                    placeholder="Phone Number *"
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
+                    leftIcon="call-outline"
+                  />
+                </View>
               </Card>
             )}
 
@@ -376,6 +388,10 @@ const styles = StyleSheet.create({
   },
   form: {
     width: '100%',
+    alignItems: 'center',
+  },
+  inputWrapper: {
+    width: '100%',
   },
   errorContainer: {
     backgroundColor: colors.status.error + '20',
@@ -390,6 +406,9 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     marginBottom: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   sectionTitle: {
     ...typography.h3,
@@ -416,11 +435,17 @@ const styles = StyleSheet.create({
   signupButton: {
     marginTop: spacing.md,
     marginBottom: spacing.lg,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 400,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   dividerLine: {
     flex: 1,
@@ -434,6 +459,9 @@ const styles = StyleSheet.create({
   },
   socialButton: {
     marginBottom: spacing.md,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 400,
   },
   loginLink: {
     marginTop: spacing.lg,

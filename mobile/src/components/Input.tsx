@@ -27,12 +27,19 @@ export const Input: React.FC<InputProps> = ({
   onRightIconPress,
   containerStyle,
   style,
+  editable = true,
   ...props
 }) => {
+  const isDisabled = editable === false;
+  
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <View style={[styles.inputContainer, error && styles.inputError]}>
+      <View style={[
+        styles.inputContainer,
+        error && styles.inputError,
+        isDisabled && styles.inputContainerDisabled
+      ]}>
         {leftIcon && (
           <Ionicons
             name={leftIcon}
@@ -42,8 +49,9 @@ export const Input: React.FC<InputProps> = ({
           />
         )}
         <TextInput
-          style={[styles.input, style]}
+          style={[styles.input, isDisabled && styles.inputDisabled, style]}
           placeholderTextColor={colors.text.muted}
+          editable={editable}
           {...props}
         />
         {rightIcon && (
@@ -74,21 +82,28 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(60, 60, 60, 0.7)', // Lighter translucent background
+    backgroundColor: colors.background.secondary, // Light grey background
     borderRadius: radius.xl, // More rounded (28px)
     borderWidth: 1, // Subtle border
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    paddingHorizontal: spacing.md,
-    minHeight: 48,
+    borderColor: colors.border.medium,
+    paddingHorizontal: spacing.lg,
+    minHeight: 56,
   },
   inputError: {
     borderColor: colors.status.error,
+  },
+  inputContainerDisabled: {
+    backgroundColor: colors.background.tertiary,
+    opacity: 0.7,
   },
   input: {
     flex: 1,
     ...typography.body,
     color: colors.text.primary,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  inputDisabled: {
+    color: colors.text.tertiary,
   },
   leftIcon: {
     marginRight: spacing.sm,

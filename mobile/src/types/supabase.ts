@@ -22,6 +22,21 @@ export interface Restaurant {
   phone?: string | null;
   status: 'open' | 'busy' | 'closed';
   settings: any | null;
+  // Platform information
+  platforms?: string[] | null;
+  platform_details?: Record<string, any> | null;
+  // Google Places data
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  rating?: number | null;
+  price_level?: number | null;
+  website?: string | null;
+  photo_url?: string | null;
+  google_maps_url?: string | null;
+  cuisine?: string | null;
+  types?: string[] | null;
+  opening_hours?: any | null;
 }
 
 export interface ReservationRequest {

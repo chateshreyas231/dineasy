@@ -71,7 +71,7 @@ export const DinerTabs: React.FC = () => {
           ),
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="AI"
         component={AIStackNavigator}
         options={{
@@ -79,7 +79,7 @@ export const DinerTabs: React.FC = () => {
             <Ionicons name="sparkles" size={size} color={color} />
           ),
         }}
-      />
+      /> */}
       <Tab.Screen
         name="Watchlist"
         component={WatchlistScreen}

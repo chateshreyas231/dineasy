@@ -6,15 +6,16 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
-import { Chip } from '../../components/Chip';
-import { colors, typography, spacing, gradients, shadows } from '../../theme';
+import { colors, typography, spacing, gradients, shadows, radius } from '../../theme';
 import { useAppStore } from '../../store/useAppStore';
 import { useSessionStore } from '../../store/useSessionStore';
 import { useProfileStore } from '../../store/useProfileStore';
@@ -113,13 +114,16 @@ export const ProfileScreen: React.FC = () => {
         return;
       }
 
-      // Refresh profile to get latest data
-      if (userId) {
-        await fetchProfile(userId);
+      // Update local state from the updated profile in the store
+      // updateProfile and updateExtra already update the profile state, so we can use it directly
+      const updatedProfile = useProfileStore.getState().profile;
+      if (updatedProfile) {
+        setFullName(updatedProfile.full_name || '');
+        setPhone(updatedProfile.phone || '');
+        setDietary(updatedProfile.extra?.dietary || []);
       }
       
       setIsEditing(false);
-      Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
       console.error('Error saving profile:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to update profile';
@@ -165,10 +169,46 @@ export const ProfileScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
         >
-          <Text style={styles.title}>PROFILE</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>PROFILE</Text>
+            {!isEditing ? (
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setIsEditing(true);
+                }}
+                style={styles.editButton}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="pencil" size={18} color={colors.text.primary} />
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  onPress={handleCancel}
+                  style={styles.iconButton}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={20} color={colors.text.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleSave}
+                  style={[styles.iconButton, saving && styles.iconButtonDisabled]}
+                  activeOpacity={0.7}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <ActivityIndicator size="small" color={colors.primary.main} />
+                  ) : (
+                    <Ionicons name="checkmark" size={20} color={colors.primary.main} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
 
           {/* Temporary Set Vegetarian Button */}
-          <Card variant="glass3d" style={styles.card}>
+          {/* <Card variant="glass3d" style={styles.card}>
             <Button
               title="Set vegetarian (Temporary)"
               onPress={handleSetVegetarian}
@@ -176,21 +216,12 @@ export const ProfileScreen: React.FC = () => {
               size="md"
               style={styles.tempButton}
             />
-          </Card>
+          </Card> */}
 
           {/* Basic Information */}
           <Card variant="glass3d" style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.sectionTitle}>BASIC INFORMATION</Text>
-              {!isEditing && (
-                <Button
-                  title="Edit"
-                  onPress={() => setIsEditing(true)}
-                  variant="secondary"
-                  size="sm"
-                  style={styles.editButton}
-                />
-              )}
             </View>
 
             <Input
@@ -199,7 +230,6 @@ export const ProfileScreen: React.FC = () => {
               onChangeText={setFullName}
               placeholder="Enter your full name"
               editable={isEditing}
-              style={!isEditing && styles.inputDisabled}
             />
 
             <Input
@@ -209,7 +239,6 @@ export const ProfileScreen: React.FC = () => {
               placeholder="Enter your phone number"
               keyboardType="phone-pad"
               editable={isEditing}
-              style={!isEditing && styles.inputDisabled}
             />
 
             <View style={styles.infoRow}>
@@ -227,28 +256,33 @@ export const ProfileScreen: React.FC = () => {
           <Card variant="glass3d" style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.sectionTitle}>DIETARY PREFERENCES</Text>
-              {!isEditing && (
-                <Button
-                  title="Edit"
-                  onPress={() => setIsEditing(true)}
-                  variant="secondary"
-                  size="sm"
-                  style={styles.editButton}
-                />
-              )}
             </View>
 
-            <View style={styles.chipContainer}>
-              {dietaryOptions.map((option) => (
-                <Chip
-                  key={option}
-                  label={option}
-                  
-                  selected={dietary.includes(option.toLowerCase())}
-                  onPress={isEditing ? () => toggleDietary(option) : undefined}
-                  style={styles.chip}
-                />
-              ))}
+            <View style={styles.dietarySelector}>
+              {dietaryOptions.map((option) => {
+                const isSelected = dietary.includes(option.toLowerCase());
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.dietaryButton,
+                      isSelected && styles.dietaryButtonActive,
+                    ]}
+                    onPress={isEditing ? () => toggleDietary(option) : undefined}
+                    activeOpacity={0.7}
+                    disabled={!isEditing}
+                  >
+                    <Text
+                      style={[
+                        styles.dietaryButtonText,
+                        isSelected && styles.dietaryButtonTextActive,
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {dietary.length === 0 && !isEditing && (
@@ -256,28 +290,6 @@ export const ProfileScreen: React.FC = () => {
             )}
           </Card>
 
-          {/* Save/Cancel Actions - shown when editing any section */}
-          {isEditing && (
-            <Card variant="glass3d" style={styles.card}>
-              <View style={styles.editActions}>
-                <Button
-                  title="Cancel"
-                  onPress={handleCancel}
-                  variant="secondary"
-                  size="md"
-                  style={styles.cancelButton}
-                />
-                <Button
-                  title={saving ? 'Saving...' : 'Save Changes'}
-                  onPress={handleSave}
-                  variant="secondary"
-                  size="md"
-                  style={styles.saveButton}
-                  disabled={saving}
-                />
-              </View>
-            </Card>
-          )}
 
           {/* Profile Metadata */}
           <Card variant="glass" style={styles.card}>
@@ -331,13 +343,47 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: spacing.lg,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
   title: {
     ...typography.h1,
     color: colors.text.primary,
-    marginBottom: spacing.lg,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 2,
+    flex: 1,
+  },
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background.secondary,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'center',
+  },
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background.secondary,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconButtonDisabled: {
+    opacity: 0.5,
   },
   card: {
     marginBottom: spacing.md,
@@ -377,31 +423,35 @@ const styles = StyleSheet.create({
   tempButton: {
     marginBottom: spacing.sm,
   },
-  editButton: {
-    minWidth: 60,
-  },
-  editActions: {
+  dietarySelector: {
     flexDirection: 'row',
-    marginTop: spacing.md,
-    gap: spacing.md,
-  },
-  cancelButton: {
-    flex: 1,
-  },
-  saveButton: {
-    flex: 1,
-  },
-  inputDisabled: {
-    opacity: 0.6,
-  },
-  chipContainer: {
-    flexDirection: 'column-reverse',
     flexWrap: 'wrap',
     gap: spacing.sm,
     marginTop: spacing.sm,
   },
-  chip: {
-    marginBottom: spacing.xs,
+  dietaryButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    backgroundColor: colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+  },
+  dietaryButtonActive: {
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
+  },
+  dietaryButtonText: {
+    ...typography.body,
+    color: colors.text.primary,
+    fontWeight: '500',
+  },
+  dietaryButtonTextActive: {
+    color: colors.text.inverse,
+    fontWeight: '600',
   },
   emptyText: {
     ...typography.bodySmall,

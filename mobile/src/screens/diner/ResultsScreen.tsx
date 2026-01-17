@@ -13,6 +13,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { PlatformBadges } from '../../components/PlatformBadge';
 import { colors, typography, spacing, radius, gradients, shadows } from '../../theme';
 import { mockRestaurants } from '../../mock/restaurants';
 import { Restaurant } from '../../types';
@@ -53,6 +54,9 @@ export const ResultsScreen: React.FC = () => {
           highlights: r.vibeTags || [],
           bookingLink: r.bookingLink,
           platform: r.platform,
+          platforms: r.platforms || (r.platform ? [r.platform] : []),
+          platformDetails: r.platformDetails,
+          placeId: r.placeId,
         }));
         setRestaurants(transformed);
       }
@@ -122,6 +126,15 @@ export const ResultsScreen: React.FC = () => {
                       </View>
                     ))}
                   </View>
+                  {restaurant.platforms && restaurant.platforms.length > 0 && (
+                    <View style={styles.platformsContainer}>
+                      <PlatformBadges 
+                        platforms={restaurant.platforms} 
+                        maxVisible={3}
+                        size="small"
+                      />
+                    </View>
+                  )}
                   <Button
                     title="View Details"
                     onPress={() => handleRestaurantPress(restaurant)}
@@ -221,5 +234,11 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: spacing.sm,
+  },
+  platformsContainer: {
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
 });

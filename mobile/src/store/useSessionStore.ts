@@ -33,7 +33,23 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('Error getting session:', error);
+        // Handle invalid refresh token errors gracefully
+        const isInvalidTokenError = 
+          error.message?.includes('Invalid Refresh Token') ||
+          error.message?.includes('Refresh Token Not Found') ||
+          error.message?.includes('JWT');
+        
+        if (isInvalidTokenError) {
+          // Clear invalid session silently - user will need to sign in again
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            // Ignore sign out errors if already signed out
+          }
+        } else {
+          console.error('Error getting session:', error);
+        }
+        
         set({ session: null, userId: null, loading: false });
         return;
       }
@@ -57,8 +73,26 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         );
         set({ _subscription: subscription });
       }
-    } catch (error) {
-      console.error('Error initializing session:', error);
+    } catch (error: any) {
+      // Handle unexpected errors
+      const isInvalidTokenError = 
+        error?.message?.includes('Invalid Refresh Token') ||
+        error?.message?.includes('Refresh Token Not Found') ||
+        error?.message?.includes('JWT');
+      
+      if (!isInvalidTokenError) {
+        console.error('Error initializing session:', error);
+      }
+      
+      // Try to clear invalid session
+      if (supabase && isInvalidTokenError) {
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          // Ignore sign out errors
+        }
+      }
+      
       set({ session: null, userId: null, loading: false });
     }
   },

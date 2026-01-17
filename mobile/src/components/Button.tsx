@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
     ...typography.button,
     textAlign: 'center',
     fontWeight: '600',
+    flexShrink: 0,
   },
   text_sm: {
     fontSize: 14,
