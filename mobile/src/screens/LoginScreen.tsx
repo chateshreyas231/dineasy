@@ -14,8 +14,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
-import { colors, typography, spacing, radius } from '../theme';
+import { colors, typography, spacing, radius, gradients } from '../theme';
 import { useAppStore } from '../store/useAppStore';
+import { useSessionStore } from '../store/useSessionStore';
+import { useProfileStore } from '../store/useProfileStore';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../lib/supabase';
 
@@ -24,7 +26,9 @@ const ADMIN_PASSWORD = 'admin123';
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { setUser, role } = useAppStore();
+  const { setUser, setRole, role } = useAppStore();
+  const { signIn } = useSessionStore();
+  const { fetchProfile } = useProfileStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,46 +44,45 @@ export const LoginScreen: React.FC = () => {
     setError('');
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Use session store's signIn method
+      const { error: signInError } = await signIn(email, password);
 
-      if (authError) {
+      if (signInError) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setError(authError.message);
+        setError(signInError);
         return;
       }
 
-      if (!authData.user) {
+      // Get the current user from session
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setError('Invalid response from server');
         return;
       }
 
-      // Fetch or create profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
+      // Fetch profile using profile store
+      await fetchProfile(user.id);
 
-      if (profileError && profileError.code !== 'PGRST116') {
-        // PGRST116 is "not found" which is okay for new users
-        console.error('Profile fetch error:', profileError);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setError(profileError.message || 'Failed to fetch profile');
-        return;
-      }
-
-      // Set user in store (triggers navigation via RoleSwitcher)
+      // Get the profile from the store to get the correct role
+      const { profile } = useProfileStore.getState();
+      
+      // Set user in store with the correct role from profile
+      // RootNavigator will handle routing based on profile
       setUser({
-        id: authData.user.id,
-        email: authData.user.email!,
-        name: profile?.full_name || authData.user.email?.split('@')[0] || 'User',
-        role: (profile?.role as 'diner' | 'restaurant') || 'diner',
-        isAdmin: profile?.role === 'admin',
+        id: user.id,
+        email: user.email!,
+        name: profile?.full_name || user.email?.split('@')[0] || 'User',
+        role: profile?.role || 'diner', // Use profile role, fallback to diner
+        isAdmin: false,
       });
+      
+      // Also update the role in app store to ensure consistency
+      if (profile?.role) {
+        setRole(profile.role);
+      }
+      
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -122,47 +125,45 @@ export const LoginScreen: React.FC = () => {
     setError('');
     
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: ADMIN_EMAIL,
-        password: ADMIN_PASSWORD,
-      });
+      // Use session store's signIn method
+      const { error: signInError } = await signIn(ADMIN_EMAIL, ADMIN_PASSWORD);
 
-      if (authError) {
+      if (signInError) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setError(authError.message);
+        setError(signInError);
         return;
       }
 
-      if (!authData.user) {
+      // Get the current user from session
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setError('Invalid response from server');
         return;
       }
 
-      // Fetch or create profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
+      // Fetch profile using profile store
+      await fetchProfile(user.id);
 
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.error('Profile fetch error:', profileError);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setError(profileError.message || 'Failed to fetch profile');
-        return;
-      }
-
-      // Set user in store (triggers navigation via RoleSwitcher)
+      // Get the profile from the store to get the correct role
+      const { profile } = useProfileStore.getState();
+      
+      // Set user in store with the correct role from profile
+      // RootNavigator will handle routing based on profile
       setUser({
-        id: authData.user.id,
-        email: authData.user.email!,
-        name: profile?.full_name || 'Admin',
-        role: 'diner', // Set admin role to diner by default (can switch)
+        id: user.id,
+        email: user.email!,
+        name: 'Admin',
+        role: profile?.role || 'diner', // Use profile role, fallback to diner
         isAdmin: true,
       });
-      // Set admin role to diner by default (can switch)
-      useAppStore.getState().setRole('diner');
+      
+      // Also update the role in app store to ensure consistency
+      if (profile?.role) {
+        setRole(profile.role);
+      }
+      
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -175,7 +176,7 @@ export const LoginScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        colors={gradients.soft as any}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safeArea}>
@@ -184,7 +185,7 @@ export const LoginScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.title}>WELCOME BACK</Text>
             <Text style={styles.subtitle}>Sign in to continue</Text>
           </View>
 
@@ -285,6 +286,8 @@ const styles = StyleSheet.create({
     ...typography.h1,
     color: colors.text.primary,
     marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
   subtitle: {
     ...typography.body,

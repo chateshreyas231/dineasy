@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
-import { colors, typography, spacing, radius } from '../../theme';
+import { colors, typography, spacing, radius, gradients, shadows } from '../../theme';
 import { useAppStore } from '../../store/useAppStore';
 import { TableRequest } from '../../types';
 import * as Haptics from 'expo-haptics';
@@ -55,7 +55,7 @@ export const RequestDetailScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        colors={gradients.soft as any}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safeArea}>
@@ -65,7 +65,7 @@ export const RequestDetailScreen: React.FC = () => {
         >
           <Text style={styles.title}>Request Details</Text>
 
-          <Card style={styles.card}>
+          <Card variant="glass3d" style={styles.card}>
             <View style={styles.statusHeader}>
               <Text style={styles.sectionTitle}>Reservation Details</Text>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
@@ -123,7 +123,7 @@ export const RequestDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -138,6 +138,7 @@ const styles = StyleSheet.create({
     ...typography.h1,
     color: colors.text.primary,
     marginBottom: spacing.lg,
+    fontWeight: '700',
   },
   card: {
     marginBottom: spacing.lg,

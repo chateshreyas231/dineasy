@@ -1,81 +1,86 @@
 /**
- * Glassmorphism Theme - Color System
- * Soft, translucent elements with pastel gradients
+ * Minimalist Monochromatic Theme - Color System
+ * Clean, futuristic aesthetic with white, light gray, and black
  */
 
 export const colors = {
-  // Primary Colors - Pink to Purple Gradient
+  // Primary Colors - Monochromatic black
   primary: {
-    main: '#FF6B92', // Vibrant pink
-    light: '#FFB3D1', // Light pink
-    dark: '#E91E63', // Darker pink
-    glow: '#FFE5F0', // Subtle pink glow
+    main: '#000000', // Pure black
+    light: '#1A1A1A', // Very dark gray
+    dark: '#000000', // Pure black
+    glow: 'rgba(0, 0, 0, 0.1)', // Subtle black glow
   },
 
-  // Accent Colors
+  // Accent Colors - Minimal grayscale
   accent: {
-    purple: '#B66DFF', // Soft purple
-    lavender: '#D4A5FF', // Light lavender
-    pink: '#FF6B92', // Pastel pink
-    blue: '#6B9FFF', // Medium blue
-    indigo: '#8B7FFF', // Indigo accent
-    rose: '#FFB3D1', // Rose pink
-    violet: '#B66DFF', // Violet
-    lightPurple: '#D4A5FF', // Light purple
+    purple: '#808080', // Medium gray
+    lavender: '#808080', // Medium gray
+    pink: '#808080', // Medium gray
+    blue: '#808080', // Medium gray
+    indigo: '#808080', // Medium gray
+    rose: '#808080', // Medium gray
+    violet: '#808080', // Medium gray
+    lightPurple: '#808080', // Medium gray
+    gold: '#808080', // Medium gray for ratings
   },
 
-  // Backgrounds - Very light with subtle gradients
+  // Backgrounds - White and light gray tones
   background: {
-    primary: '#F8F9FA', // Very light off-white
-    secondary: '#FFFFFF', // Pure white
-    tertiary: '#F0F2F5', // Light gray
-    elevated: '#FFFFFF', // Pure white for elevated surfaces
-    card: '#FFFFFF', // Clean white cards with transparency
-    cardHover: '#FAFBFC', // Subtle hover state
-    chatAI: '#F5F7FA', // AI chat bubble background
-    glass: 'rgba(255, 255, 255, 0.7)', // Glassmorphism effect
+    primary: '#FFFFFF', // Pure white
+    secondary: '#F5F5F5', // Very light gray
+    tertiary: '#E5E5E5', // Light gray
+    elevated: '#FAFAFA', // Off-white elevated surface
+    card: 'rgba(255, 255, 255, 0.95)', // White translucent card
+    cardHover: 'rgba(250, 250, 250, 0.98)', // Hover state
+    chatAI: 'rgba(245, 245, 245, 0.95)', // AI chat bubble
+    glass: 'rgba(255, 255, 255, 0.9)', // Glassmorphism effect
+    overlay: 'rgba(255, 255, 255, 0.95)', // Translucent overlay
   },
 
-  // Text Colors - Dark for readability
+  // Text Colors - Black and gray tones
   text: {
-    primary: '#333333', // Dark charcoal for headings
-    secondary: '#666666', // Medium gray
-    tertiary: '#888888', // Lighter gray for descriptions
-    muted: '#888888', // Muted gray for secondary text
-    disabled: '#CCCCCC', // Disabled state
+    primary: '#000000', // Pure black for headings
+    secondary: '#1A1A1A', // Very dark gray
+    tertiary: '#4A4A4A', // Dark gray
+    muted: '#808080', // Medium gray
+    disabled: '#B0B0B0', // Light gray disabled state
     inverse: '#FFFFFF', // White text on dark backgrounds
+    onDark: '#FFFFFF', // White text on dark backgrounds
   },
 
-  // Borders - Very subtle
+  // Borders - Subtle gray borders
   border: {
-    light: '#F0F0F0', // Very subtle gray
-    medium: '#E8E8E8', // Standard border
-    dark: '#DDDDDD', // Stronger border
-    focus: '#FF6B92', // Focus state (pink)
-    elegant: 'rgba(255, 107, 146, 0.2)', // Soft pink subtle border
+    light: 'rgba(0, 0, 0, 0.08)', // Very subtle black
+    medium: 'rgba(0, 0, 0, 0.12)', // Standard border
+    dark: 'rgba(0, 0, 0, 0.2)', // Stronger border
+    focus: '#000000', // Focus state (black)
+    elegant: 'rgba(0, 0, 0, 0.15)', // Soft black border
   },
 
-  // Status Colors
+  // Status Colors - Minimal grayscale
   status: {
-    success: '#4CAF50',
-    warning: '#FF9800',
-    error: '#F44336',
-    info: '#2196F3',
+    success: '#4A4A4A', // Dark gray
+    warning: '#6A6A6A', // Medium-dark gray
+    error: '#000000', // Black
+    info: '#4A4A4A', // Dark gray
   },
 };
 
-// Gradient definitions
+// Gradient definitions - Minimal gradients
 export const gradients = {
-  // Primary action gradient - Pink to Purple
-  primary: ['#FF6B92', '#B66DFF'], // Pink to purple
-  // Background gradient - Blue to Purple (for special elements)
-  background: ['#6B9FFF', '#B66DFF'], // Blue to purple
-  // Soft background gradient
-  soft: ['#F8F9FA', '#FFFFFF', '#F0F2F5'], // Very light gray-white
-  // Elegant gradient
-  elegant: ['#FF6B92', '#B66DFF', '#8B7FFF'], // Pink to purple to indigo
-  // Chat gradient
-  chat: ['#F5F7FA', '#FFFFFF'], // Light gray to white
-  // Glassmorphism gradient
-  glass: ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.6)'],
+  // Primary action gradient - Black to dark gray
+  primary: ['#000000', '#1A1A1A'], // Black gradient
+  // Background gradient - White to light gray
+  background: ['#FFFFFF', '#F5F5F5', '#FFFFFF'], // White gradient
+  // Soft background gradient - Light tones
+  soft: ['#FFFFFF', '#FAFAFA', '#F5F5F5'], // White to light gray
+  // Elegant gradient - Monochromatic
+  elegant: ['#000000', '#4A4A4A', '#808080'], // Black to gray
+  // Chat gradient - Light tones
+  chat: ['#F5F5F5', '#FFFFFF'], // Light gray to white
+  // Glassmorphism gradient - White translucent
+  glass: ['rgba(255, 255, 255, 0.95)', 'rgba(250, 250, 250, 0.9)'],
+  // Overlay gradient - White translucent
+  overlay: ['rgba(255, 255, 255, 0.98)', 'rgba(250, 250, 250, 0.95)'],
 };

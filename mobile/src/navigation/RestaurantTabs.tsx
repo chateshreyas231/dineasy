@@ -4,21 +4,19 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme';
 import { RestaurantHomeStatusScreen } from '../screens/restaurant/RestaurantHomeStatusScreen';
-import { RequestsInboxScreen } from '../screens/restaurant/RequestsInboxScreen';
-import { RequestDetailScreen } from '../screens/restaurant/RequestDetailScreen';
-import { HoldsScreen } from '../screens/restaurant/HoldsScreen';
+import { RequestsInbox } from '../screens/restaurant/RequestsInbox';
+import { RequestDetails } from '../screens/restaurant/RequestDetails';
 import { InsightsScreen } from '../screens/restaurant/InsightsScreen';
 import { RestaurantSettingsScreen } from '../screens/restaurant/RestaurantSettingsScreen';
-import { TableMapScreen } from '../screens/restaurant/TableMapScreen';
 
 const Tab = createBottomTabNavigator();
-const RequestsStack = createNativeStackNavigator();
+const InboxStack = createNativeStackNavigator();
 
-const RequestsStackNavigator = () => (
-  <RequestsStack.Navigator screenOptions={{ headerShown: false }}>
-    <RequestsStack.Screen name="RequestsInbox" component={RequestsInboxScreen} />
-    <RequestsStack.Screen name="RequestDetail" component={RequestDetailScreen} />
-  </RequestsStack.Navigator>
+const InboxStackNavigator = () => (
+  <InboxStack.Navigator screenOptions={{ headerShown: false }}>
+    <InboxStack.Screen name="RequestsInbox" component={RequestsInbox} />
+    <InboxStack.Screen name="RequestDetails" component={RequestDetails} />
+  </InboxStack.Navigator>
 );
 
 export const RestaurantTabs: React.FC = () => {
@@ -31,42 +29,26 @@ export const RestaurantTabs: React.FC = () => {
         tabBarStyle: {
           backgroundColor: colors.background.card,
           borderTopColor: colors.border.elegant,
+          borderTopWidth: 1,
         },
       }}
+      initialRouteName="Home"
     >
       <Tab.Screen
-        name="Status"
+        name="Home"
         component={RestaurantHomeStatusScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="pulse" size={size} color={color} />
+            <Ionicons name="home" size={size} color={color} />
           ),
         }}
       />
       <Tab.Screen
-        name="Table Map"
-        component={TableMapScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Requests"
-        component={RequestsStackNavigator}
+        name="Inbox"
+        component={InboxStackNavigator}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="mail" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Holds"
-        component={HoldsScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time" size={size} color={color} />
           ),
         }}
       />

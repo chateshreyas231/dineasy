@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
-import { colors, typography, spacing, radius } from '../../theme';
+import { colors, typography, spacing, radius, gradients, shadows } from '../../theme';
 import { useAppStore } from '../../store/useAppStore';
 import { Restaurant } from '../../types';
 import { useNavigation } from '@react-navigation/native';
@@ -35,7 +35,7 @@ export const WatchlistScreen: React.FC = () => {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+          colors={gradients.soft as any}
           style={StyleSheet.absoluteFill}
         />
         <SafeAreaView style={styles.safeArea}>
@@ -68,7 +68,7 @@ export const WatchlistScreen: React.FC = () => {
               key={restaurant.id}
               onPress={() => handleRestaurantPress(restaurant)}
             >
-              <Card style={styles.card}>
+              <Card variant="glass3d" style={styles.card} interactive>
                 {restaurant.imageUrl && (
                   <Image
                     source={{ uri: restaurant.imageUrl }}
@@ -100,7 +100,7 @@ export const WatchlistScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -108,11 +108,12 @@ const styles = StyleSheet.create({
   header: {
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.elegant,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   title: {
     ...typography.h1,
     color: colors.text.primary,
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,
@@ -126,8 +127,9 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 200,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     marginBottom: spacing.md,
+    ...shadows.md,
   },
   content: {
     position: 'relative',

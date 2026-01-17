@@ -92,7 +92,7 @@ export async function listRestaurantPendingRequests(): Promise<Request[]> {
   const { data, error } = await supabase
     .from('booking_requests')
     .select('*, restaurants!inner(*)')
-    .eq('restaurants.owner_id', user.id)
+    .eq('restaurants.owner_user_id', user.id)
     .eq('status', 'pending')
     .order('created_at', { ascending: false });
 

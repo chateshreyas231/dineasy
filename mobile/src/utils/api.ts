@@ -228,7 +228,7 @@ export const requestApi = {
       const { data, error } = await supabase
         .from('booking_requests')
         .select('*, restaurants!inner(*)')
-        .eq('restaurants.owner_id', user.id);
+        .eq('restaurants.owner_user_id', user.id);
       
       if (error) return { error: error.message };
       return { data };

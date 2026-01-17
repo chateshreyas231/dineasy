@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
-import { colors, typography, spacing } from '../../theme';
+import { colors, typography, spacing, gradients, shadows } from '../../theme';
 import { useAppStore } from '../../store/useAppStore';
 import { bookingApi } from '../../utils/api';
 import * as WebBrowser from 'expo-web-browser';
@@ -87,7 +87,7 @@ export const TonightPlanScreen: React.FC = () => {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+          colors={gradients.soft as any}
           style={StyleSheet.absoluteFill}
         />
         <SafeAreaView style={styles.safeArea}>
@@ -114,7 +114,7 @@ export const TonightPlanScreen: React.FC = () => {
         >
           <Text style={styles.title}>Tonight's Plan</Text>
 
-          <Card style={styles.card}>
+          <Card variant="glass3d" style={styles.card}>
             <Text style={styles.restaurantName}>{currentPlan.restaurantName}</Text>
             <View style={styles.details}>
               <Text style={styles.detail}>
@@ -154,7 +154,7 @@ export const TonightPlanScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -169,6 +169,7 @@ const styles = StyleSheet.create({
     ...typography.h1,
     color: colors.text.primary,
     marginBottom: spacing.lg,
+    fontWeight: '700',
   },
   card: {
     marginBottom: spacing.lg,

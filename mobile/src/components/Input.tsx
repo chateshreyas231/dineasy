@@ -74,9 +74,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.secondary, // White background
+    backgroundColor: 'rgba(60, 60, 60, 0.7)', // Lighter translucent background
     borderRadius: radius.xl, // More rounded (28px)
-    borderWidth: 0, // No border for cleaner look
+    borderWidth: 1, // Subtle border
+    borderColor: 'rgba(255, 255, 255, 0.18)',
     paddingHorizontal: spacing.md,
     minHeight: 48,
   },

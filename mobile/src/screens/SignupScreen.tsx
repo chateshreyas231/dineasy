@@ -17,13 +17,14 @@ import { Input } from '../components/Input';
 import { Card } from '../components/Card';
 import { colors, typography, spacing, radius } from '../theme';
 import { useAppStore } from '../store/useAppStore';
+import { useProfileStore } from '../store/useProfileStore';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../lib/supabase';
-// import * as DocumentPicker from 'expo-document-picker'; // Install: npx expo install expo-document-picker
 
 export const SignupScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { setUser, role } = useAppStore();
+  const { setUser, setRole, role } = useAppStore();
+  const { fetchProfile } = useProfileStore();
   
   // Basic auth fields
   const [name, setName] = useState('');
@@ -31,23 +32,9 @@ export const SignupScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
-  // Restaurant-specific fields
+  // Restaurant-specific fields (minimal - just what's needed for account creation)
   const [restaurantName, setRestaurantName] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [zipCode, setZipCode] = useState('');
   const [phone, setPhone] = useState('');
-  const [managerName, setManagerName] = useState('');
-  const [cuisine, setCuisine] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [numberOfTables, setNumberOfTables] = useState('');
-  const [menuFile, setMenuFile] = useState<any | null>(null);
-  const [menuFileName, setMenuFileName] = useState('');
-  const [employees, setEmployees] = useState<Array<{ name: string; role: string; email: string }>>([]);
-  const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [newEmployeeRole, setNewEmployeeRole] = useState('');
-  const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -71,10 +58,10 @@ export const SignupScreen: React.FC = () => {
       return;
     }
 
-    // Restaurant-specific validation
+    // Restaurant-specific validation (minimal - just name and phone)
     if (isRestaurant) {
-      if (!restaurantName || !address || !phone || !managerName) {
-        setError('Please fill in all required restaurant fields');
+      if (!restaurantName || !phone) {
+        setError('Please provide restaurant name and phone number');
         return;
       }
     }
@@ -83,34 +70,46 @@ export const SignupScreen: React.FC = () => {
     setError('');
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Call Supabase signUp directly to get full response including user data
+      // Note: Supabase needs to be configured to send OTP codes in email templates
+      // The email template should include the OTP code (typically 6 digits)
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: undefined, // Don't use redirect, use OTP code instead
+        },
       });
 
-      if (authError) {
+      if (signUpError) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setError(authError.message);
+        setError(signUpError.message);
         setLoading(false);
         return;
       }
 
-      if (!authData.user) {
+      // Check if we have a user in the response
+      const user = signUpData?.user;
+      const session = signUpData?.session;
+
+      // If no session, email confirmation is required
+      if (!session) {
+        // Navigate to email verification screen
+        setLoading(false);
+        navigation.navigate('EmailVerification' as never, {
+          email,
+          password,
+          name,
+          restaurantName: isRestaurant ? restaurantName : undefined,
+          phone: isRestaurant ? phone : undefined,
+        } as never);
+        return;
+      }
+
+      // If we have a session but no user, something went wrong
+      if (!user) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setError('Invalid response from server');
-        setLoading(false);
-        return;
-      }
-
-      // Check if email confirmation is required
-      if (!authData.session) {
-        // Email confirmation required - profile will be created after email confirmation
-        // You can either show a message or create profile via a database trigger
-        Alert.alert(
-          'Check your email',
-          'Please confirm your email address to complete registration. Your profile will be created after confirmation.',
-          [{ text: 'OK' }]
-        );
         setLoading(false);
         return;
       }
@@ -120,7 +119,7 @@ export const SignupScreen: React.FC = () => {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({
-          id: authData.user.id,
+          id: user.id,
           role: userRole,
           full_name: name,
           phone: isRestaurant ? phone : null,
@@ -139,16 +138,16 @@ export const SignupScreen: React.FC = () => {
 
       console.log('Profile created successfully:', profileData);
 
-      // Insert restaurant record if restaurant role
+      // Insert minimal restaurant record if restaurant role
+      // Additional details will be collected during onboarding
       if (isRestaurant) {
         const { error: restaurantError } = await supabase
           .from('restaurants')
           .insert({
-            owner_id: authData.user.id,
+            owner_user_id: user.id,
             name: restaurantName,
             phone: phone,
-            address: address,
-            city: city,
+            // Address, city, lat, lng, cuisine, price_level will be added during onboarding
           });
 
         if (restaurantError) {
@@ -159,13 +158,20 @@ export const SignupScreen: React.FC = () => {
         }
       }
 
-      // Set user in store (triggers navigation via RoleSwitcher)
+      // Fetch profile to update profile store (RootNavigator uses profile store)
+      await fetchProfile(user.id);
+
+      // Set user in store (triggers navigation via App.tsx routing)
       setUser({
-        id: authData.user.id,
-        email: authData.user.email!,
+        id: user.id,
+        email: user.email!,
         name,
         role: userRole,
       });
+      
+      // Also update role in app store to ensure consistency
+      setRole(userRole);
+      
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -203,56 +209,6 @@ export const SignupScreen: React.FC = () => {
     }
   };
 
-  const handlePickMenu = async () => {
-    // TODO: Install expo-document-picker: npx expo install expo-document-picker
-    // For now, using a simple text input for menu URL or file name
-    Alert.alert(
-      'Menu Upload',
-      'Menu upload will be available after installing expo-document-picker. For now, you can add your menu later in settings.',
-      [{ text: 'OK' }]
-    );
-    // Uncomment when expo-document-picker is installed:
-    // try {
-    //   const result = await DocumentPicker.getDocumentAsync({
-    //     type: ['application/pdf', 'image/*'],
-    //     copyToCacheDirectory: true,
-    //   });
-    //   
-    //   if (!result.canceled && result.assets && result.assets.length > 0) {
-    //     setMenuFile(result);
-    //     setMenuFileName(result.assets[0].name);
-    //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    //   }
-    // } catch (err) {
-    //   Alert.alert('Error', 'Failed to pick menu file');
-    // }
-  };
-
-  const handleAddEmployee = () => {
-    if (!newEmployeeName || !newEmployeeRole || !newEmployeeEmail) {
-      Alert.alert('Error', 'Please fill in all employee fields');
-      return;
-    }
-    
-    setEmployees([
-      ...employees,
-      {
-        name: newEmployeeName,
-        role: newEmployeeRole,
-        email: newEmployeeEmail,
-      },
-    ]);
-    
-    setNewEmployeeName('');
-    setNewEmployeeRole('');
-    setNewEmployeeEmail('');
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
-
-  const handleRemoveEmployee = (index: number) => {
-    setEmployees(employees.filter((_, i) => i !== index));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
 
   return (
     <View style={styles.container}>
@@ -317,182 +273,28 @@ export const SignupScreen: React.FC = () => {
               />
             </Card>
 
-            {/* Restaurant-Specific Fields */}
+            {/* Restaurant-Specific Fields - Minimal info only */}
             {isRestaurant && (
-              <>
-                {/* Restaurant Basic Information */}
-                <Card style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>Restaurant Information</Text>
-                  
-                  <Input
-                    placeholder="Restaurant Name *"
-                    value={restaurantName}
-                    onChangeText={setRestaurantName}
-                    leftIcon="restaurant-outline"
-                  />
-                  <Input
-                    placeholder="Cuisine Type"
-                    value={cuisine}
-                    onChangeText={setCuisine}
-                    leftIcon="fast-food-outline"
-                  />
-                  <Input
-                    placeholder="Phone Number *"
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                    leftIcon="call-outline"
-                  />
-                  <Input
-                    placeholder="Manager Name *"
-                    value={managerName}
-                    onChangeText={setManagerName}
-                    leftIcon="person-outline"
-                  />
-                </Card>
-
-                {/* Address Information */}
-                <Card style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>Address</Text>
-                  
-                  <Input
-                    placeholder="Street Address *"
-                    value={address}
-                    onChangeText={setAddress}
-                    leftIcon="location-outline"
-                  />
-                  <View style={styles.row}>
-                    <View style={styles.halfWidth}>
-                      <Input
-                        placeholder="City"
-                        value={city}
-                        onChangeText={setCity}
-                        containerStyle={styles.halfInput}
-                      />
-                    </View>
-                    <View style={styles.halfWidth}>
-                      <Input
-                        placeholder="State"
-                        value={state}
-                        onChangeText={setState}
-                        containerStyle={styles.halfInput}
-                      />
-                    </View>
-                  </View>
-                  <Input
-                    placeholder="ZIP Code"
-                    value={zipCode}
-                    onChangeText={setZipCode}
-                    keyboardType="numeric"
-                    leftIcon="map-outline"
-                  />
-                </Card>
-
-                {/* Capacity and Tables */}
-                <Card style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>Capacity & Tables (Optional)</Text>
-                  
-                  <Input
-                    placeholder="Total Capacity"
-                    value={capacity}
-                    onChangeText={setCapacity}
-                    keyboardType="numeric"
-                    leftIcon="people-outline"
-                  />
-                  <Input
-                    placeholder="Number of Tables"
-                    value={numberOfTables}
-                    onChangeText={setNumberOfTables}
-                    keyboardType="numeric"
-                    leftIcon="grid-outline"
-                  />
-                  <Text style={styles.helperText}>
-                    You can add detailed table information later in settings
-                  </Text>
-                </Card>
-
-                {/* Menu Upload */}
-                <Card style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>Menu (Optional)</Text>
-                  
-                  <Input
-                    placeholder="Menu URL or File Name (Optional)"
-                    value={menuFileName}
-                    onChangeText={setMenuFileName}
-                    leftIcon="document-text-outline"
-                  />
-                  <TouchableOpacity
-                    style={styles.filePickerButton}
-                    onPress={handlePickMenu}
-                  >
-                    <Ionicons
-                      name="cloud-upload-outline"
-                      size={24}
-                      color={colors.primary.main}
-                    />
-                    <Text style={styles.filePickerText}>
-                      Upload Menu File (PDF or Image)
-                    </Text>
-                  </TouchableOpacity>
-                  <Text style={styles.helperText}>
-                    You can upload your menu file or add a menu URL. Full file upload requires expo-document-picker.
-                  </Text>
-                </Card>
-
-                {/* Employees */}
-                <Card style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>Employees (Optional)</Text>
-                  
-                  <Input
-                    placeholder="Employee Name"
-                    value={newEmployeeName}
-                    onChangeText={setNewEmployeeName}
-                    leftIcon="person-add-outline"
-                  />
-                  <Input
-                    placeholder="Role (e.g., Server, Host, Manager)"
-                    value={newEmployeeRole}
-                    onChangeText={setNewEmployeeRole}
-                    leftIcon="briefcase-outline"
-                  />
-                  <Input
-                    placeholder="Email"
-                    value={newEmployeeEmail}
-                    onChangeText={setNewEmployeeEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    leftIcon="mail-outline"
-                  />
-                  <Button
-                    title="Add Employee"
-                    onPress={handleAddEmployee}
-                    variant="secondary"
-                    size="sm"
-                    style={styles.addButton}
-                  />
-
-                  {employees.length > 0 && (
-                    <View style={styles.employeesList}>
-                      {employees.map((employee, index) => (
-                        <View key={index} style={styles.employeeItem}>
-                          <View style={styles.employeeInfo}>
-                            <Text style={styles.employeeName}>{employee.name}</Text>
-                            <Text style={styles.employeeDetails}>
-                              {employee.role} • {employee.email}
-                            </Text>
-                          </View>
-                          <TouchableOpacity
-                            onPress={() => handleRemoveEmployee(index)}
-                            style={styles.removeEmployeeButton}
-                          >
-                            <Ionicons name="close-circle" size={24} color={colors.status.error} />
-                          </TouchableOpacity>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </Card>
-              </>
+              <Card style={styles.sectionCard}>
+                <Text style={styles.sectionTitle}>Restaurant Information</Text>
+                <Text style={styles.helperText}>
+                  We'll collect additional details in the next step
+                </Text>
+                
+                <Input
+                  placeholder="Restaurant Name *"
+                  value={restaurantName}
+                  onChangeText={setRestaurantName}
+                  leftIcon="restaurant-outline"
+                />
+                <Input
+                  placeholder="Phone Number *"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  leftIcon="call-outline"
+                />
+              </Card>
             )}
 
             <Button
@@ -610,62 +412,6 @@ const styles = StyleSheet.create({
     color: colors.text.muted,
     marginTop: spacing.xs,
     fontStyle: 'italic',
-  },
-  filePickerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background.secondary,
-    borderRadius: radius.xl,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border.elegant,
-    borderStyle: 'dashed',
-  },
-  filePickerText: {
-    ...typography.body,
-    color: colors.text.primary,
-    marginLeft: spacing.sm,
-    flex: 1,
-  },
-  removeFileButton: {
-    marginTop: spacing.sm,
-    alignSelf: 'flex-start',
-  },
-  removeFileText: {
-    ...typography.bodySmall,
-    color: colors.status.error,
-  },
-  addButton: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  employeesList: {
-    marginTop: spacing.md,
-  },
-  employeeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.background.secondary,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  employeeInfo: {
-    flex: 1,
-  },
-  employeeName: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  employeeDetails: {
-    ...typography.bodySmall,
-    color: colors.text.muted,
-  },
-  removeEmployeeButton: {
-    marginLeft: spacing.sm,
   },
   signupButton: {
     marginTop: spacing.md,

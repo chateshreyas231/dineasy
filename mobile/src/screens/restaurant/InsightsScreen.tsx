@@ -8,12 +8,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Card } from '../../components/Card';
-import { colors, typography, spacing } from '../../theme';
+import { colors, typography, spacing, gradients, shadows } from '../../theme';
 
 export const InsightsScreen: React.FC = () => {
   return (
     <LinearGradient
-      colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+      colors={gradients.soft as any}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
@@ -23,7 +23,7 @@ export const InsightsScreen: React.FC = () => {
         >
           <Text style={styles.title}>Insights</Text>
 
-          <Card style={styles.card}>
+          <Card variant="glass3d" style={styles.card}>
             <Text style={styles.sectionTitle}>Request Trends</Text>
             <View style={styles.stat}>
               <Text style={styles.statValue}>45</Text>
@@ -31,12 +31,12 @@ export const InsightsScreen: React.FC = () => {
             </View>
           </Card>
 
-          <Card style={styles.card}>
+          <Card variant="glass3d" style={styles.card}>
             <Text style={styles.sectionTitle}>Popular Times</Text>
             <Text style={styles.text}>7:00 PM - 8:00 PM</Text>
           </Card>
 
-          <Card style={styles.card}>
+          <Card variant="glass3d" style={styles.card}>
             <Text style={styles.sectionTitle}>Revenue Insights</Text>
             <View style={styles.stat}>
               <Text style={styles.statValue}>$12,450</Text>
@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
     ...typography.h1,
     color: colors.text.primary,
     marginBottom: spacing.lg,
+    fontWeight: '700',
   },
   card: {
     marginBottom: spacing.lg,

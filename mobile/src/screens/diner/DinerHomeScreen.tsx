@@ -10,20 +10,16 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Button } from '../../components/Button';
 import { Chip } from '../../components/Chip';
-import { AIOrb } from '../../components/AIOrb';
 import { Card } from '../../components/Card';
-import { colors, typography, spacing, radius } from '../../theme';
+import { colors, typography, spacing, radius, shadows } from '../../theme';
 import { useAppStore } from '../../store/useAppStore';
 import { Restaurant } from '../../types';
 import { listRestaurants } from '../../data/restaurants';
 import * as Haptics from 'expo-haptics';
-
-const aiButtonRadius = radius.md;
 
 export const DinerHomeScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -73,28 +69,44 @@ export const DinerHomeScreen: React.FC = () => {
   };
 
   const handleRestaurantPress = (restaurant: Restaurant) => {
-    navigation.navigate('RestaurantDetail' as never, { restaurant } as never);
+    (navigation as any).navigate('RestaurantDetail', { restaurant });
   };
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
-        style={StyleSheet.absoluteFill}
-      />
       <SafeAreaView style={styles.safeArea}>
-        {/* Header with AI Button */}
-        <View style={styles.topHeader}>
-          <Text style={styles.pageTitle}>Browse</Text>
+        {/* Minimalist Header - Grid, Circle with Arrow, Bookmark */}
+        <View style={styles.header}>
           <TouchableOpacity
-            style={styles.aiButton}
+            style={styles.headerIcon}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="grid-outline" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerCenterIcon}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               (navigation as any).navigate('AIAssistant');
             }}
             activeOpacity={0.7}
           >
-            <Ionicons name="sparkles" size={24} color={colors.primary.main} />
+            <View style={styles.circleIcon}>
+              <Ionicons name="arrow-forward" size={16} color={colors.text.primary} />
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerIcon}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              (navigation as any).navigate('Watchlist');
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="bookmark-outline" size={24} color={colors.text.primary} />
           </TouchableOpacity>
         </View>
 
@@ -103,114 +115,139 @@ export const DinerHomeScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <Text style={styles.greeting}>
-              {user ? `Welcome back, ${user.name}` : 'What would you like to discover today?'}
-            </Text>
-            <Text style={styles.title}>Discover Your Perfect Dining Experience</Text>
-          </View>
-
-          <View style={styles.orbContainer}>
-            <AIOrb size={100} />
-          </View>
-
-          <Card style={styles.searchCard}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search for restaurants..."
-              placeholderTextColor={colors.text.muted}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearch}
-            />
-            <Button
-              title="Search"
-              onPress={handleSearch}
-              variant="secondary"
-              size="md"
-              style={styles.searchButton}
-            />
-          </Card>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Search</Text>
-            <View style={styles.chipsContainer}>
-              {quickChips.map((chip) => (
-                <Chip
-                  key={chip.label}
-                  label={chip.label}
-                  onPress={() => handleChipPress(chip)}
-                />
-              ))}
+          {/* Main Content */}
+          <View style={styles.mainContent}>
+            <Text style={styles.pageTitle}>BROWSE</Text>
+            
+            <View style={styles.searchSection}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search restaurants..."
+                placeholderTextColor={colors.text.muted}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
+              />
             </View>
-          </View>
 
-          <Card style={styles.partyCard}>
-            <Text style={styles.partyLabel}>Party Size</Text>
-            <View style={styles.partySelector}>
-              {[1, 2, 4, 6, 8].map((size) => (
-                <Button
-                  key={size}
-                  title={size.toString()}
-                  onPress={() => setPartySize(size)}
-                  variant={partySize === size ? 'secondary' : 'ghost'}
-                  size="sm"
-                  style={styles.partyButton}
-                />
-              ))}
-            </View>
-          </Card>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Restaurants</Text>
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary.main} />
-              </View>
-            ) : restaurants.length > 0 ? (
-              <View style={styles.restaurantsContainer}>
-                {restaurants.map((restaurant) => (
+            <View style={styles.section}>
+              <View style={styles.chipsContainer}>
+                {quickChips.map((chip) => (
                   <TouchableOpacity
-                    key={restaurant.id}
-                    onPress={() => handleRestaurantPress(restaurant)}
+                    key={chip.label}
+                    style={styles.chip}
+                    onPress={() => handleChipPress(chip)}
+                    activeOpacity={0.7}
                   >
-                    <Card style={styles.restaurantCard}>
-                      {restaurant.imageUrl && (
-                        <Image
-                          source={{ uri: restaurant.imageUrl }}
-                          style={styles.restaurantImage}
-                        />
-                      )}
-                      <View style={styles.restaurantContent}>
-                        <Text style={styles.restaurantName}>{restaurant.name}</Text>
-                        <View style={styles.restaurantMeta}>
-                          <View style={styles.rating}>
-                            <Ionicons
-                              name="star"
-                              size={16}
-                              color={colors.accent.gold}
-                            />
-                            <Text style={styles.ratingText}>{restaurant.rating}</Text>
-                          </View>
-                          <Text style={styles.restaurantCuisine}>{restaurant.cuisine}</Text>
-                          {restaurant.distance && (
-                            <Text style={styles.restaurantDistance}>
-                              {restaurant.distance} mi
-                            </Text>
-                          )}
-                        </View>
-                      </View>
-                    </Card>
+                    <Text style={styles.chipText}>{chip.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No restaurants found</Text>
+            </View>
+
+            <View style={styles.partySection}>
+              <Text style={styles.partyLabel}>PARTY SIZE</Text>
+              <View style={styles.partySelector}>
+                {[1, 2, 4, 6, 8].map((size) => (
+                  <TouchableOpacity
+                    key={size}
+                    style={[
+                      styles.partyButton,
+                      partySize === size && styles.partyButtonActive,
+                    ]}
+                    onPress={() => setPartySize(size)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.partyButtonText,
+                        partySize === size && styles.partyButtonTextActive,
+                      ]}
+                    >
+                      {size}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-            )}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>RESTAURANTS</Text>
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={colors.primary.main} />
+                </View>
+              ) : restaurants.length > 0 ? (
+                <View style={styles.restaurantsContainer}>
+                  {restaurants.map((restaurant) => (
+                    <TouchableOpacity
+                      key={restaurant.id}
+                      onPress={() => handleRestaurantPress(restaurant)}
+                      activeOpacity={0.9}
+                    >
+                      <Card variant="default" style={styles.restaurantCard} interactive>
+                        {restaurant.imageUrl && (
+                          <Image
+                            source={{ uri: restaurant.imageUrl }}
+                            style={styles.restaurantImage}
+                          />
+                        )}
+                        <View style={styles.restaurantContent}>
+                          <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                          <View style={styles.restaurantMeta}>
+                            <Text style={styles.restaurantCode}>
+                              {restaurant.id?.toString().padStart(3, '0') || '000'} RESTAURANT
+                            </Text>
+                            <Text style={styles.restaurantDetails}>
+                              {restaurant.cuisine} • {restaurant.rating}
+                            </Text>
+                          </View>
+                        </View>
+                      </Card>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No restaurants found</Text>
+                </View>
+              )}
+            </View>
           </View>
         </ScrollView>
+
+        {/* Footer with same header pattern */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.headerIcon}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="grid-outline" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerCenterIcon}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.circleIcon}>
+              <Ionicons name="arrow-forward" size={16} color={colors.text.primary} />
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerIcon}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="bookmark-outline" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -219,12 +256,12 @@ export const DinerHomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA', // Fallback color
+    backgroundColor: colors.background.primary,
   },
   safeArea: {
     flex: 1,
   },
-  topHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -233,82 +270,109 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
   },
-  pageTitle: {
-    ...typography.h1,
-    color: colors.text.primary,
-  },
-  aiButton: {
-    width: 44,
-    height: 44,
-    borderRadius: aiButtonRadius,
-    borderWidth: 1.5,
-    borderColor: colors.border.elegant,
-    backgroundColor: colors.background.card,
+  headerIcon: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerCenterIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circleIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background.secondary,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
+    paddingBottom: spacing.xl,
+  },
+  mainContent: {
     padding: spacing.lg,
   },
-  header: {
-    marginBottom: spacing.lg,
-  },
-  greeting: {
-    ...typography.body,
-    color: colors.text.muted,
-    marginBottom: spacing.xs,
-  },
-  title: {
+  pageTitle: {
     ...typography.h1,
     color: colors.text.primary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 3,
+    marginBottom: spacing.xl,
   },
-  orbContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: spacing.lg,
-    minHeight: 120, // Ensure container has space
-  },
-  searchCard: {
-    marginBottom: spacing.lg,
+  searchSection: {
+    marginBottom: spacing.xl,
   },
   searchInput: {
     ...typography.body,
     color: colors.text.primary,
-    backgroundColor: colors.background.card,
-    borderRadius: radius.md,
+    backgroundColor: colors.background.secondary,
+    borderRadius: radius.sm,
     padding: spacing.md,
-    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border.medium,
-  },
-  searchButton: {
-    width: '100%',
-    maxHeight: 50, // Limit button height
+    borderColor: colors.border.light,
   },
   section: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   sectionTitle: {
-    ...typography.h3,
+    ...typography.h4,
     color: colors.text.primary,
     marginBottom: spacing.md,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    fontWeight: '500',
   },
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  partyCard: {
-    marginTop: spacing.md,
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    backgroundColor: colors.background.secondary,
+  },
+  chipText: {
+    ...typography.bodySmall,
+    color: colors.text.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  partySection: {
+    marginBottom: spacing.xl,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
   },
   partyLabel: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.text.primary,
+    ...typography.bodySmall,
+    fontWeight: '500',
+    color: colors.text.muted,
     marginBottom: spacing.md,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   partySelector: {
     flexDirection: 'row',
@@ -316,6 +380,27 @@ const styles = StyleSheet.create({
   },
   partyButton: {
     flex: 1,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    backgroundColor: colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  partyButtonActive: {
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
+  },
+  partyButtonText: {
+    ...typography.body,
+    color: colors.text.primary,
+    fontWeight: '500',
+  },
+  partyButtonTextActive: {
+    color: colors.text.inverse,
+    fontWeight: '600',
   },
   loadingContainer: {
     padding: spacing.xl,
@@ -323,47 +408,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   restaurantsContainer: {
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   restaurantCard: {
-    marginBottom: spacing.md,
+    marginBottom: 0,
     overflow: 'hidden',
+    padding: 0,
   },
   restaurantImage: {
     width: '100%',
-    height: 180,
-    borderRadius: radius.md,
-    marginBottom: spacing.md,
+    height: 280,
+    marginBottom: 0,
+    borderRadius: 0,
   },
   restaurantContent: {
-    gap: spacing.sm,
-  },
-  restaurantName: {
-    ...typography.h3,
-    color: colors.text.primary,
-  },
-  restaurantMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  rating: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    padding: spacing.lg,
     gap: spacing.xs,
   },
-  ratingText: {
-    ...typography.body,
-    fontWeight: '600',
+  restaurantName: {
+    ...typography.h2,
     color: colors.text.primary,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
   },
-  restaurantCuisine: {
+  restaurantMeta: {
+    gap: spacing.xs,
+  },
+  restaurantCode: {
     ...typography.bodySmall,
     color: colors.text.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: '400',
   },
-  restaurantDistance: {
-    ...typography.bodySmall,
+  restaurantDetails: {
+    ...typography.body,
     color: colors.text.muted,
+    fontWeight: '400',
   },
   emptyContainer: {
     padding: spacing.xl,

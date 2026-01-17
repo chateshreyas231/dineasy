@@ -16,21 +16,27 @@ import { BookingsScreen } from '../screens/diner/BookingsScreen';
 import { ProfileScreen } from '../screens/diner/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
-const BrowseStack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator();
+const AIStack = createNativeStackNavigator();
 
-const BrowseStackNavigator = () => (
-  <BrowseStack.Navigator 
+const HomeStackNavigator = () => (
+  <HomeStack.Navigator 
     screenOptions={{ headerShown: false }}
-    initialRouteName="BrowseHome"
+    initialRouteName="DinerHome"
   >
-    <BrowseStack.Screen name="BrowseHome" component={DinerHomeScreen} />
-    <BrowseStack.Screen name="AIAssistant" component={AIAssistantScreen} />
-    <BrowseStack.Screen name="IntentBuilder" component={IntentBuilderScreen} />
-    <BrowseStack.Screen name="Results" component={ResultsScreen} />
-    <BrowseStack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
-    <BrowseStack.Screen name="RequestTable" component={RequestTableScreen} />
-    <BrowseStack.Screen name="RequestStatus" component={RequestStatusScreen} />
-  </BrowseStack.Navigator>
+    <HomeStack.Screen name="DinerHome" component={DinerHomeScreen} />
+    <HomeStack.Screen name="IntentBuilder" component={IntentBuilderScreen} />
+    <HomeStack.Screen name="Results" component={ResultsScreen} />
+    <HomeStack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+    <HomeStack.Screen name="RequestTable" component={RequestTableScreen} />
+    <HomeStack.Screen name="RequestStatus" component={RequestStatusScreen} />
+  </HomeStack.Navigator>
+);
+
+const AIStackNavigator = () => (
+  <AIStack.Navigator screenOptions={{ headerShown: false }}>
+    <AIStack.Screen name="AIAssistant" component={AIAssistantScreen} />
+  </AIStack.Navigator>
 );
 
 export const DinerTabs: React.FC = () => {
@@ -41,28 +47,37 @@ export const DinerTabs: React.FC = () => {
         tabBarActiveTintColor: colors.primary.main,
         tabBarInactiveTintColor: colors.text.muted,
         tabBarStyle: {
-          backgroundColor: colors.background.card,
-          borderTopColor: colors.border.elegant,
+          backgroundColor: colors.background.primary,
+          borderTopColor: colors.border.light,
           borderTopWidth: 1,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
         },
       }}
-      initialRouteName="Browse"
+      initialRouteName="Home"
     >
       <Tab.Screen
-        name="Browse"
-        component={BrowseStackNavigator}
-        options={({ route }) => {
-          const routeName = getFocusedRouteNameFromRoute(route) ?? 'BrowseHome';
-          return {
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="search" size={size} color={color} />
-            ),
-            tabBarStyle: routeName === 'AIAssistant' ? { display: 'none' } : {
-              backgroundColor: colors.background.card,
-              borderTopColor: colors.border.elegant,
-              borderTopWidth: 1,
-            },
-          };
+        name="Home"
+        component={HomeStackNavigator}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AI"
+        component={AIStackNavigator}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="sparkles" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -75,7 +90,7 @@ export const DinerTabs: React.FC = () => {
         }}
       />
       <Tab.Screen
-        name="Bookings"
+        name="Plans"
         component={BookingsScreen}
         options={{
           tabBarIcon: ({ color, size }) => (

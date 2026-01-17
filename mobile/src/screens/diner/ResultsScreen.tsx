@@ -13,7 +13,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
-import { colors, typography, spacing, radius } from '../../theme';
+import { colors, typography, spacing, radius, gradients, shadows } from '../../theme';
 import { mockRestaurants } from '../../mock/restaurants';
 import { Restaurant } from '../../types';
 import { restaurantApi } from '../../utils/api';
@@ -76,7 +76,7 @@ export const ResultsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        colors={gradients.soft as any}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safeArea}>
@@ -92,7 +92,7 @@ export const ResultsScreen: React.FC = () => {
               key={restaurant.id}
               onPress={() => handleRestaurantPress(restaurant)}
             >
-              <Card style={styles.restaurantCard}>
+              <Card variant="glass3d" style={styles.restaurantCard} interactive>
                 {restaurant.imageUrl && (
                   <Image
                     source={{ uri: restaurant.imageUrl }}
@@ -142,7 +142,7 @@ export const ResultsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA', // Fallback color
+    backgroundColor: colors.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -150,11 +150,12 @@ const styles = StyleSheet.create({
   header: {
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.elegant,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   title: {
     ...typography.h1,
     color: colors.text.primary,
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,
@@ -169,8 +170,9 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 200,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     marginBottom: spacing.md,
+    ...shadows.md,
   },
   content: {
     gap: spacing.sm,

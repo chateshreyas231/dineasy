@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/Card';
-import { colors, typography, spacing, radius } from '../../theme';
+import { colors, typography, spacing, radius, gradients, shadows } from '../../theme';
 import { bookingApi } from '../../utils/api';
 import * as Haptics from 'expo-haptics';
 
@@ -128,7 +128,7 @@ export const BookingsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        colors={gradients.soft as any}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safeArea}>
@@ -155,7 +155,7 @@ export const BookingsScreen: React.FC = () => {
                   }}
                   activeOpacity={0.7}
                 >
-                  <Card style={styles.bookingCard}>
+                  <Card variant="glass3d" style={styles.bookingCard} interactive>
                     <View style={styles.bookingHeader}>
                       <View style={styles.bookingInfo}>
                         <Text style={styles.restaurantName}>{booking.restaurantName}</Text>
@@ -202,7 +202,7 @@ export const BookingsScreen: React.FC = () => {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Past</Text>
               {pastBookings.map((booking) => (
-                <Card key={booking.id} style={styles.bookingCard}>
+                <Card key={booking.id} variant="glass" style={styles.bookingCard}>
                   <View style={styles.bookingHeader}>
                     <View style={styles.bookingInfo}>
                       <Text style={styles.restaurantName}>{booking.restaurantName}</Text>
@@ -246,6 +246,7 @@ export const BookingsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -253,11 +254,12 @@ const styles = StyleSheet.create({
   header: {
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.elegant,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   title: {
     ...typography.h1,
     color: colors.text.primary,
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,

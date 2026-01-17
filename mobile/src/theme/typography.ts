@@ -1,55 +1,55 @@
 /**
- * Typography System
- * Refined font sizes, line heights, and letter spacing
+ * Minimalist Typography System
+ * Clean, refined font sizes with minimal letter spacing
  */
 
 export const typography = {
   // Display
   display: {
-    fontSize: 52,
-    fontWeight: '700' as const,
-    lineHeight: 60,
-    letterSpacing: -0.8,
+    fontSize: 48,
+    fontWeight: '600' as const,
+    lineHeight: 56,
+    letterSpacing: -0.5,
   },
 
   // Headings
   h1: {
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: '600' as const,
-    lineHeight: 40,
-    letterSpacing: -0.5,
+    lineHeight: 38,
+    letterSpacing: -0.3,
   },
   h2: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    lineHeight: 34,
+    fontSize: 26,
+    fontWeight: '600' as const,
+    lineHeight: 32,
     letterSpacing: 0,
   },
   h3: {
-    fontSize: 24,
-    fontWeight: '600' as const,
-    lineHeight: 30,
+    fontSize: 22,
+    fontWeight: '500' as const,
+    lineHeight: 28,
     letterSpacing: 0,
   },
   h4: {
-    fontSize: 20,
-    fontWeight: '600' as const,
-    lineHeight: 26,
+    fontSize: 18,
+    fontWeight: '500' as const,
+    lineHeight: 24,
     letterSpacing: 0,
   },
 
   // Body
   bodyLarge: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '400' as const,
-    lineHeight: 28.8, // 1.6
-    letterSpacing: 0.1,
+    lineHeight: 26,
+    letterSpacing: 0,
   },
   body: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '400' as const,
-    lineHeight: 25.6, // 1.6
-    letterSpacing: 0.1,
+    lineHeight: 23,
+    letterSpacing: 0,
   },
   bodySmall: {
     fontSize: 13,
@@ -60,17 +60,18 @@ export const typography = {
 
   // Button
   button: {
-    fontSize: 17,
-    fontWeight: '600' as const,
-    lineHeight: 24,
-    letterSpacing: 0.5,
+    fontSize: 16,
+    fontWeight: '500' as const,
+    lineHeight: 22,
+    letterSpacing: 1,
+    textTransform: 'uppercase' as const,
   },
 
   // Caption
   caption: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '400' as const,
-    lineHeight: 19.5, // 1.5
+    lineHeight: 18,
     letterSpacing: 0,
   },
 };

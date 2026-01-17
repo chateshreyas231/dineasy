@@ -11,7 +11,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
-import { colors, typography, spacing } from '../../theme';
+import { colors, typography, spacing, gradients, shadows } from '../../theme';
 import { supabase } from '../../lib/supabase';
 import { createRequest } from '../../data/requests';
 import * as Haptics from 'expo-haptics';
@@ -88,7 +88,7 @@ export const RequestTableScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#F8F9FA', '#FFFFFF', '#F0F2F5']}
+        colors={gradients.soft as any}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safeArea}>
@@ -101,7 +101,7 @@ export const RequestTableScreen: React.FC = () => {
             <Text style={styles.restaurantName}>{restaurantName}</Text>
           ) : null}
 
-          <Card style={styles.card}>
+          <Card variant="glass3d" style={styles.card}>
             <Input
               label="Date & Time"
               placeholder="e.g., Tomorrow 7:00 PM"
@@ -143,7 +143,7 @@ export const RequestTableScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -158,6 +158,7 @@ const styles = StyleSheet.create({
     ...typography.h1,
     color: colors.text.primary,
     marginBottom: spacing.xs,
+    fontWeight: '700',
   },
   restaurantName: {
     ...typography.h3,
